@@ -53,7 +53,7 @@ import org.la4j.vector.functor.VectorProcedure;
  */
 public class CompressedVector extends SparseVector {
 
-    private static final byte VECTOR_TAG = (byte) 0x10;
+    public static final byte VECTOR_TAG = (byte) 0x10;
 
     private static final int MINIMUM_SIZE = 32;
 

@@ -75,7 +75,7 @@ public abstract class Vector implements Iterable<Double> {
      * Creates a zero {@link Vector} of the given {@code length}.
      */
     public static Vector zero(int length) {
-        return length > 1000 ? SparseVector.zero(length) : DenseVector.zero(length);
+        return VectorFactory.zero(length);
     }
 
     /**
@@ -83,14 +83,14 @@ public abstract class Vector implements Iterable<Double> {
      * the given {@code value}.
      */
     public static Vector constant(int length, double value) {
-        return DenseVector.constant(length, value);
+        return VectorFactory.constant(length, value);
     }
 
     /**
      * Creates an unit {@link Vector} of the given {@code length}.
      */
     public static Vector unit(int length) {
-        return DenseVector.constant(length, 1.0);
+        return VectorFactory.constant(length, 1.0);
     }
 
     /**
@@ -98,7 +98,7 @@ public abstract class Vector implements Iterable<Double> {
      * the given {@code Random}.
      */
     public static Vector random(int length, Random random) {
-        return DenseVector.random(length, random);
+        return VectorFactory.random(length, random);
     }
 
     /**
@@ -106,7 +106,7 @@ public abstract class Vector implements Iterable<Double> {
      * copying the underlying array.
      */
     public static Vector fromArray(double[] array) {
-        return DenseVector.fromArray(array);
+        return VectorFactory.fromArray(array);
     }
 
     /**
@@ -117,24 +117,8 @@ public abstract class Vector implements Iterable<Double> {
      * @return a parsed vector
      */
     public static Vector fromCSV(String csv) {
-        StringTokenizer tokenizer = new StringTokenizer(csv, ", ");
-        int estimatedLength = csv.length() / (5 + 2) + 1; // 5 symbols per element "0.000"
-                                                          // 2 symbols for delimiter ", "
-        Vector result = DenseVector.zero(estimatedLength);
-
-        int i = 0;
-        while (tokenizer.hasMoreTokens()) {
-            if (result.length() == i) {
-                result = result.copyOfLength((i * 3) / 2 + 1);
-            }
-
-            double x = Double.parseDouble(tokenizer.nextToken());
-            result.set(i++, x);
-        }
-
-        return result.copyOfLength(i);
+        return VectorFactory.fromCSV(csv);
     }
-
 
     /**
      * Parses {@link Vector} from the given Matrix Market string.
@@ -144,62 +128,28 @@ public abstract class Vector implements Iterable<Double> {
      * @return a parsed vector
      */
     public static Vector fromMatrixMarket(String mm) {
-        StringTokenizer body = new StringTokenizer(mm);
-
-        if (!"%%MatrixMarket".equals(body.nextToken())) {
-            throw new IllegalArgumentException("Wrong input file format: can not read header '%%MatrixMarket'.");
-        }
-
-        String object = body.nextToken();
-        if (!"vector".equals(object)) {
-            throw new IllegalArgumentException("Unexpected object: " + object + ".");
-        }
-
-        String format = body.nextToken();
-        if (!"coordinate".equals(format) && !"array".equals(format)) {
-            throw new IllegalArgumentException("Unknown format: " + format + ".");
-        }
-
-        String field = body.nextToken();
-        if (!"real".equals(field)) {
-            throw new IllegalArgumentException("Unknown field type: " + field + ".");
-        }
-
-        int length = Integer.parseInt(body.nextToken());
-        if ("coordinate".equals(format)) {
-            int cardinality = Integer.parseInt(body.nextToken());
-            Vector result = SparseVector.zero(length, cardinality);
-
-            for (int k = 0; k < cardinality; k++) {
-                int i = Integer.parseInt(body.nextToken());
-                double x = Double.parseDouble(body.nextToken());
-                result.set(i - 1, x);
-            }
-
-            return result;
-        } else {
-            Vector result = DenseVector.zero(length);
-
-            for (int i = 0; i < length; i++) {
-                result.set(i, Double.valueOf(body.nextToken()));
-            }
-
-            return result;
-        }
+        return VectorFactory.fromMatrixMarket(mm);
     }
 
     /**
      * Creates new {@link org.la4j.vector.dense.BasicVector} from {@code list}
      */
     public static Vector fromCollection(Collection<? extends Number> list) {
-        return DenseVector.fromCollection(list);
+        return VectorFactory.fromCollection(list);
     }
 
     /**
      * Creates new {@link org.la4j.vector.SparseVector} from {@code list}
      */
     public static Vector fromMap(Map<Integer, ? extends Number> map, int length) {
-        return SparseVector.fromMap(map, length);
+        return VectorFactory.fromMap(map, length);
+    }
+
+    /**
+     * Restore Vector from binary array
+     */
+    public static Vector fromBinary(byte[] array) {
+        return VectorFactory.fromBinary(array);
     }
 
     //
@@ -645,7 +595,7 @@ public abstract class Vector implements Iterable<Double> {
      *
      * @return the new vector with the selected elements
      */
-    public Vector select(int[] indices) {
+    public Vector select(int ... indices) {
         int newLength = indices.length;
 
         if (newLength == 0) {

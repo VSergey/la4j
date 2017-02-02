@@ -22,11 +22,8 @@
 package org.la4j.vector.dense;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -49,7 +46,7 @@ import org.la4j.vector.VectorFactory;
  */
 public class BasicVector extends DenseVector {
 
-    private static final byte VECTOR_TAG = (byte) 0x00;
+    public static final byte VECTOR_TAG = (byte) 0x00;
 
     private double[] self;
 
