@@ -26,19 +26,16 @@ import org.la4j.matrix.DenseMatrix;
 import org.la4j.matrix.ColumnMajorSparseMatrix;
 import org.la4j.matrix.RowMajorSparseMatrix;
 
-public abstract class CommonMatrixOperation<R> extends MatrixOperation<R> {
+public abstract class CommonMatrixOperation<R> implements MatrixOperation<R> {
 
-    @Override
     public R apply(DenseMatrix a) {
         return applyCommon(a);
     }
 
-    @Override
     public R apply(RowMajorSparseMatrix a) {
         return applyCommon(a);
     }
 
-    @Override
     public R apply(ColumnMajorSparseMatrix a) {
         return applyCommon(a);
     }

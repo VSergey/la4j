@@ -38,16 +38,15 @@ public class SquareRootSolver extends AbstractSolver implements LinearSystemSolv
         super(a);
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
         Matrix s = a.blank();
         Matrix d = a.blank();
 
-        Vector x = b.blankOfLength(unknowns());
-        Vector y = b.blankOfLength(unknowns());
-        Vector z = b.blankOfLength(unknowns());
+        Vector x = b.blank(unknowns());
+        Vector y = b.blank(unknowns());
+        Vector z = b.blank(unknowns());
 
         for (int i = 0; i < a.rows(); i++) {
 
@@ -95,11 +94,9 @@ public class SquareRootSolver extends AbstractSolver implements LinearSystemSolv
 
             x.set(i, (y.get(i) - acc) / s.get(i, i));
         }
-
         return x;
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         return matrix.is(Matrices.SYMMETRIC_MATRIX);
     }

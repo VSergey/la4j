@@ -21,19 +21,13 @@
 
 package org.la4j.vector;
 
-import org.la4j.Matrix;
-import org.la4j.Vectors;
+import org.la4j.*;
 import org.la4j.matrix.dense.Basic2DMatrix;
-import org.la4j.Vector;
 import org.la4j.operation.VectorMatrixOperation;
 import org.la4j.operation.VectorOperation;
 import org.la4j.operation.VectorVectorOperation;
-import org.la4j.vector.dense.BasicVector;
 
 import java.text.NumberFormat;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Random;
 
 /**
  * A dense vector.
@@ -48,108 +42,21 @@ import java.util.Random;
  * instead of the O(log n) time on sparse structures.
  * 
  */
-public abstract class DenseVector extends Vector {
+public abstract class DenseVector extends AbstractVector {
 
     public DenseVector(int length) {
         super(length);
     }
 
-    /**
-     * Creates a zero {@link DenseVector} of the given {@code length}.
-     */
-    public static DenseVector zero(int length) {
-        return BasicVector.zero(length);
-    }
-
-    /**
-     * Creates a constant {@link DenseVector} of the given {@code length} with
-     * the given {@code value}.
-     */
-    public static DenseVector constant(int length, double value) {
-        return BasicVector.constant(length, value);
-    }
-
-    /**
-     * Creates an unit {@link DenseVector} of the given {@code length}.
-     */
-    public static DenseVector unit(int length) {
-        return DenseVector.constant(length, 1.0);
-    }
-
-    /**
-     * Creates a random {@link DenseVector} of the given {@code length} with
-     * the given {@code Random}.
-     */
-    public static DenseVector random(int length, Random random) {
-        return BasicVector.random(length, random);
-    }
-
-    /**
-     * Creates a new {@link DenseVector} from the given {@code array} w/o
-     * copying the underlying array.
-     */
-    public static DenseVector fromArray(double[] array) {
-        return BasicVector.fromArray(array);
-    }
-
-    /**
-     * Parses {@link DenseVector} from the given CSV string.
-     *
-     * @param csv the CSV string representing a vector
-     *
-     * @return a parsed vector
-     */
-    public static DenseVector fromCSV(String csv) {
-        return Vector.fromCSV(csv).to(Vectors.DENSE);
-    }
-
-    /**
-     * Parses {@link DenseVector} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed vector
-     */
-    public static DenseVector fromMatrixMarket(String mm) {
-        return Vector.fromMatrixMarket(mm).to(Vectors.DENSE);
-    }
-
-    /**
-     * Creates new {@link org.la4j.vector.DenseVector} from
-     *
-     * @param list list containing doubles
-     *
-     * @return new vector from given double list
-     */
-    public static DenseVector fromCollection(Collection<? extends Number> list) {
-        return BasicVector.fromCollection(list);
-    }
-
-    /**
-     * Creates new {@link DenseVector} from index-value map
-     *
-     * @param map index-value map
-     *
-     * @param length vector length
-     *
-     * @return created vector
-     */
-    public static DenseVector fromMap(Map<Integer, ? extends Number> map, int length) {
-        return Vector.fromMap(map, length).to(Vectors.DENSE);
-    }
-
-    @Override
     public <T> T apply(VectorOperation<T> operation) {
         operation.ensureApplicableTo(this);
         return operation.apply(this);
     }
 
-    @Override
     public <T> T apply(VectorVectorOperation<T> operation, Vector that) {
         return that.apply(operation.partiallyApply(this));
     }
 
-    @Override
     public <T> T apply(VectorMatrixOperation<T> operation, Matrix that) {
         return that.apply(operation.partiallyApply(this));
     }
@@ -161,9 +68,8 @@ public abstract class DenseVector extends Vector {
      */
     public abstract double[] toArray();
 
-    @Override
     public Matrix toRowMatrix() {
-        Matrix result = Basic2DMatrix.zero(1, length);
+        Matrix result = Matrices.BASIC_2D.zero(1, length);
 
         for (int j = 0; j < length; j++) {
             result.set(0, j, get(j));
@@ -172,9 +78,8 @@ public abstract class DenseVector extends Vector {
         return result;
     }
 
-    @Override
     public Matrix toColumnMatrix() {
-        Matrix result = Basic2DMatrix.zero(length, 1);
+        Matrix result = Matrices.BASIC_2D.zero(length, 1);
 
         for (int i = 0; i < length; i++) {
             result.set(i, 0, get(i));
@@ -183,9 +88,8 @@ public abstract class DenseVector extends Vector {
         return result;
     }
 
-    @Override
     public Matrix toDiagonalMatrix() {
-        Matrix result = Basic2DMatrix.zero(length, length);
+        Matrix result = Matrices.BASIC_2D.zero(length, length);
 
         for (int i = 0; i < length; i++) {
             result.set(i, i, get(i));
@@ -194,7 +98,6 @@ public abstract class DenseVector extends Vector {
         return result;
     }
 
-    @Override
     public String toMatrixMarket(NumberFormat formatter) {
         StringBuilder out = new StringBuilder();
 

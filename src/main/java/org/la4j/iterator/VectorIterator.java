@@ -36,6 +36,10 @@ public abstract class VectorIterator extends CursorIterator {
      */
     public abstract int index();
 
+    protected int cursor() {
+        return index();
+    }
+
     public VectorIterator orElseAdd(final VectorIterator those) {
         return new CursorToVectorIterator(super.orElse(those, JoinFunction.ADD), length);
     }
@@ -58,12 +62,6 @@ public abstract class VectorIterator extends CursorIterator {
         while (both.hasNext()) {
             acc += both.next();
         }
-
         return acc;
-    }
-
-    @Override
-    protected int cursor() {
-        return index();
     }
 }

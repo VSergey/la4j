@@ -23,7 +23,6 @@ package org.la4j.decomposition;
 
 import org.la4j.Matrices;
 import org.la4j.Matrix;
-import org.la4j.matrix.SparseMatrix;
 
 public class RawLUDecompositor extends AbstractDecompositor implements MatrixDecompositor {
 
@@ -35,7 +34,7 @@ public class RawLUDecompositor extends AbstractDecompositor implements MatrixDec
     public Matrix[] decompose() {
 
         Matrix lu = matrix.copy();
-        Matrix p = SparseMatrix.identity(lu.rows());
+        Matrix p = Matrices.CRS.diagonal(lu.rows(), 1.0);
 
         for (int j = 0; j < lu.columns(); j++) {
             for (int i = 0; i < lu.rows(); i++) {

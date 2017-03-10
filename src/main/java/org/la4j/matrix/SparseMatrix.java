@@ -27,21 +27,18 @@ import org.la4j.iterator.RowMajorMatrixIterator;
 import org.la4j.iterator.VectorIterator;
 import org.la4j.Matrices;
 import org.la4j.Matrix;
+import org.la4j.matrix.dense.Basic2DMatrix;
 import org.la4j.matrix.functor.MatrixAccumulator;
 import org.la4j.matrix.functor.MatrixProcedure;
 import org.la4j.Vector;
 import org.la4j.Vectors;
-import org.la4j.matrix.sparse.CCSMatrix;
-import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.vector.functor.VectorAccumulator;
 import org.la4j.vector.functor.VectorProcedure;
-import org.la4j.vector.SparseVector;
 
 import java.text.NumberFormat;
 import java.util.NoSuchElementException;
-import java.util.Random;
 
-public abstract class SparseMatrix extends Matrix {
+public abstract class SparseMatrix extends AbstractMatrix {
 
     protected int cardinality;
 
@@ -54,99 +51,10 @@ public abstract class SparseMatrix extends Matrix {
         this.cardinality = cardinality;
     }
 
-    /**
-     * Creates a zero {@link SparseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static SparseMatrix zero(int rows, int columns) {
-        return CCSMatrix.zero(rows, columns);
+    public MatrixFactory factory() {
+        return Matrices.SPARSE;
     }
 
-    /**
-     * Creates a zero {@link SparseMatrix} of the given shape:
-     * {@code rows} x {@code columns} with the given {@code capacity}.
-     */
-    public static SparseMatrix zero(int rows, int columns, int capacity) {
-        return CRSMatrix.zero(rows, columns, capacity);
-    }
-
-    /**
-     * Creates a diagonal {@link SparseMatrix} of the given {@code size} whose
-     * diagonal elements are equal to {@code diagonal}.
-     */
-    public static SparseMatrix diagonal(int size, double diagonal) {
-        return CRSMatrix.diagonal(size, diagonal);
-    }
-
-    /**
-     * Creates an identity {@link SparseMatrix} of the given {@code size}.
-     */
-    public static SparseMatrix identity(int size) {
-        return CRSMatrix.identity(size);
-    }
-
-    /**
-     * Creates a random {@link SparseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static SparseMatrix random(int rows, int columns, double density, Random random) {
-        return CRSMatrix.random(rows, columns, density, random);
-    }
-
-    /**
-     * Creates a random symmetric {@link SparseMatrix} of the given {@code size}.
-     */
-    public static SparseMatrix randomSymmetric(int size, double density, Random random) {
-        return CRSMatrix.randomSymmetric(size, density, random);
-    }
-
-    /**
-     * Creates a new {@link SparseMatrix} from the given 1D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static SparseMatrix from1DArray(int rows, int columns, double[] array) {
-        return CRSMatrix.from1DArray(rows, columns, array);
-    }
-
-    /**
-     * Creates a new {@link SparseMatrix} from the given 2D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static SparseMatrix from2DArray(double[][] array) {
-        return CRSMatrix.from2DArray(array);
-    }
-
-    /**
-     * Creates a block {@link SparseMatrix} of the given blocks {@code a},
-     * {@code b}, {@code c} and {@code d}.
-     */
-    public static SparseMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
-        return CRSMatrix.block(a, b, c, d);
-    }
-
-    /**
-     * Parses {@link SparseMatrix} from the given CSV string.
-     *
-     * @param csv the CSV string representing a matrix
-     *
-     * @return a parsed matrix
-     */
-    public static SparseMatrix fromCSV(String csv) {
-        return Matrix.fromCSV(csv).to(Matrices.SPARSE);
-    }
-
-    /**
-     * Parses {@link SparseMatrix} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed matrix
-     */
-    public static SparseMatrix fromMatrixMarket(String mm) {
-        return Matrix.fromMatrixMarket(mm).to(Matrices.SPARSE);
-    }
-
-    @Override
     public double get(int i, int j) {
         return getOrElse(i, j, 0.0);
     }
@@ -199,9 +107,8 @@ public abstract class SparseMatrix extends Matrix {
         return ((long) rows) * columns;
     }
 
-    @Override
     public Vector getRow(int i) {
-        Vector result = SparseVector.zero(columns);
+        Vector result = Vectors.SPARSE.zero(columns);
         VectorIterator it = nonZeroIteratorOfRow(i);
 
         while (it.hasNext()) {
@@ -213,9 +120,8 @@ public abstract class SparseMatrix extends Matrix {
         return result;
     }
 
-    @Override
     public Vector getColumn(int j) {
-        Vector result = SparseVector.zero(rows);
+        Vector result = Vectors.SPARSE.zero(rows);
         VectorIterator it = nonZeroIteratorOfColumn(j);
 
         while (it.hasNext()) {
@@ -245,7 +151,7 @@ public abstract class SparseMatrix extends Matrix {
     @Override
     public Matrix add(double value) {
         MatrixIterator it = nonZeroIterator();
-        Matrix result = DenseMatrix.constant(rows, columns, value);
+        Matrix result = Basic2DMatrix.constant(rows, columns, value);
 
         while (it.hasNext()) {
             double x = it.next();
@@ -418,27 +324,22 @@ public abstract class SparseMatrix extends Matrix {
             private long limit = (long) rows * columns;
             private long i = -1;
 
-            @Override
             public int rowIndex() {
                 return (int) (i / columns);
             }
 
-            @Override
             public int columnIndex() {
                 return (int) (i - ((i / columns) * columns));
             }
 
-            @Override
             public double get() {
                 return SparseMatrix.this.get(rowIndex(), columnIndex());
             }
 
-            @Override
             public void set(double value) {
                 SparseMatrix.this.set(rowIndex(), columnIndex(), value);
             }
 
-            @Override
             public boolean hasNext() {
                 while (i + 1 < limit) {
                     i++;
@@ -447,11 +348,9 @@ public abstract class SparseMatrix extends Matrix {
                         break;
                     }
                 }
-
                 return i + 1 < limit;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -472,27 +371,22 @@ public abstract class SparseMatrix extends Matrix {
             private long limit = (long) rows * columns;
             private long i = -1;
 
-            @Override
             public int rowIndex() {
                 return (int) (i - ((i / rows) * rows));
             }
 
-            @Override
             public int columnIndex() {
                 return (int) (i / rows);
             }
 
-            @Override
             public double get() {
                 return SparseMatrix.this.get(rowIndex(), columnIndex());
             }
 
-            @Override
             public void set(double value) {
                 SparseMatrix.this.set(rowIndex(), columnIndex(), value);
             }
 
-            @Override
             public boolean hasNext() {
                 while (i + 1 < limit) {
                     i++;
@@ -505,7 +399,6 @@ public abstract class SparseMatrix extends Matrix {
                 return i + 1 < limit;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -521,36 +414,29 @@ public abstract class SparseMatrix extends Matrix {
      *
      * @return a non-zero vector iterator
      */
-    public VectorIterator nonZeroIteratorOfRow(int i) {
-        final int ii = i;
+    public VectorIterator nonZeroIteratorOfRow(final int i) {
         return new VectorIterator(columns) {
             private int j = -1;
 
-            @Override
             public int index() {
                 return j;
             }
 
-            @Override
             public double get() {
-                return SparseMatrix.this.get(ii, j);
+                return SparseMatrix.this.get(i, j);
             }
 
-            @Override
             public void set(double value) {
-                SparseMatrix.this.set(ii, j, value);
+                SparseMatrix.this.set(i, j, value);
             }
 
-            @Override
             public boolean hasNext() {
-                while (j + 1 < columns && SparseMatrix.this.isZeroAt(ii, j + 1)) {
+                while (j + 1 < columns && SparseMatrix.this.isZeroAt(i, j + 1)) {
                     j++;
                 }
-
                 return j + 1 < columns;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -566,36 +452,29 @@ public abstract class SparseMatrix extends Matrix {
      *
      * @return a non-zero vector iterator
      */
-    public VectorIterator nonZeroIteratorOfColumn(int j) {
-        final int jj = j;
+    public VectorIterator nonZeroIteratorOfColumn(final int j) {
         return new VectorIterator(rows) {
             private int i = -1;
 
-            @Override
             public int index() {
                 return i;
             }
 
-            @Override
             public double get() {
-                return SparseMatrix.this.get(i, jj);
+                return SparseMatrix.this.get(i, j);
             }
 
-            @Override
             public void set(double value) {
-                SparseMatrix.this.set(i, jj, value);
+                SparseMatrix.this.set(i, j, value);
             }
 
-            @Override
             public boolean hasNext() {
-                while (i + 1 < rows && SparseMatrix.this.isZeroAt(i + 1, jj)) {
+                while (i + 1 < rows && SparseMatrix.this.isZeroAt(i + 1, j)) {
                     i++;
                 }
-
                 return i + 1 < rows;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -606,7 +485,6 @@ public abstract class SparseMatrix extends Matrix {
         };
     }
 
-    @Override
     public String toMatrixMarket(NumberFormat formatter) {
         String majority = isRowMajor() ? "row-major" : "column-major";
         StringBuilder out = new StringBuilder();

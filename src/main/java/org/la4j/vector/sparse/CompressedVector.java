@@ -53,8 +53,6 @@ import org.la4j.vector.functor.VectorProcedure;
  */
 public class CompressedVector extends SparseVector {
 
-    public static final byte VECTOR_TAG = (byte) 0x10;
-
     private static final int MINIMUM_SIZE = 32;
 
     private double[] values;
@@ -79,13 +77,6 @@ public class CompressedVector extends SparseVector {
         super(length, cardinality);
         this.values = values;
         this.indices = indices;
-    }
-
-    /**
-     * Creates a zero {@link CompressedVector} of the given {@code length}.
-     */
-    public static CompressedVector zero(int length) {
-        return new CompressedVector(length);
     }
 
     /**
@@ -119,111 +110,10 @@ public class CompressedVector extends SparseVector {
         return new CompressedVector(length, cardinality, values, indices);
     }
 
-    /**
-     * Creates a new {@link CompressedVector} from the given {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static CompressedVector fromArray(double[] array) {
-        int length  = array.length;
-        CompressedVector result = CompressedVector.zero(length);
-
-        for (int i = 0; i < length; i++) {
-            if (array[i] != 0.0) {
-                result.set(i, array[i]);
-            }
-        }
-
-        return result;
+    public VectorFactory factory() {
+        return Vectors.COMPRESSED;
     }
 
-    /**
-     * Decodes {@link CompressedVector} from the given byte {@code array}.
-     *
-     * @param array the byte array representing a vector
-     *
-     * @return a decoded vector
-     */
-    public static CompressedVector fromBinary(byte[] array) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
-
-        if (buffer.get() != VECTOR_TAG) {
-            throw new IllegalArgumentException("Can not decode CompressedVector from the given byte array.");
-        }
-
-        int length = buffer.getInt();
-        int cardinality = buffer.getInt();
-        double[] values = new double[cardinality];
-        int[] indices = new int[cardinality];
-
-        for (int i = 0; i < cardinality; i++) {
-            indices[i] = buffer.getInt();
-            values[i] = buffer.getDouble();
-        }
-
-        return new CompressedVector(length, cardinality, values, indices);
-    }
-
-    /**
-     * Parses {@link CompressedVector} from the given CSV string.
-     *
-     * @param csv the CSV string representing a vector
-     *
-     * @return a parsed vector
-     */
-    public static CompressedVector fromCSV(String csv) {
-        return Vector.fromCSV(csv).to(Vectors.COMPRESSED);
-    }
-
-    /**
-     * Parses {@link CompressedVector} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed vector
-     */
-    public static CompressedVector fromMatrixMarket(String mm) {
-        return Vector.fromMatrixMarket(mm).to(Vectors.COMPRESSED);
-    }
-
-    /**
-     * Creates new {@link CompressedVector} from collection
-     *
-     * @param list value list
-     *
-     * @return created vector
-     */
-    public static CompressedVector fromCollection(Collection<? extends Number> list) {
-        return Vector.fromCollection(list).to(Vectors.COMPRESSED);
-    }
-
-    /**
-     * Creates new {@link CompressedVector} from index-value map
-     *
-     * @param map index-value map
-     *
-     * @param length vector length
-     *
-     * @return created vector
-     */
-    public static CompressedVector fromMap(Map<Integer, ? extends Number> map, int length) {
-        //TODO goto lambdas
-        int cardinality = map.size();
-        int[] indices = new int[cardinality];
-        double[] values = new double[cardinality];
-        int i = 0;
-        for (Map.Entry<Integer, ? extends Number> entry : map.entrySet()) {
-            int index = entry.getKey();
-            if (index < 0 || index >= length) {
-                throw new IllegalArgumentException("Check your map: Index must be 0..n-1");
-            }
-            indices[i] = index;
-            values[i] = entry.getValue().doubleValue();
-            i++;
-        }
-        return new CompressedVector(length, cardinality, values, indices);
-    }
-
-    @Override
     public double getOrElse(int i, double defaultValue) {
         ensureIndexIsInBounds(i);
         int k = searchForIndex(i);
@@ -235,7 +125,6 @@ public class CompressedVector extends SparseVector {
         return defaultValue;
     }
 
-    @Override
     public void set(int i, double value) {
         ensureIndexIsInBounds(i);
         int k = searchForIndex(i);
@@ -332,8 +221,7 @@ public class CompressedVector extends SparseVector {
         }
     }
 
-    @Override
-    public Vector copyOfLength(int length) {
+    public Vector copy(int length) {
         ensureLengthIsCorrect(length);
 
         int $cardinality = (length >= this.length) ?
@@ -386,27 +274,11 @@ public class CompressedVector extends SparseVector {
         }
     }
 
-    @Override
     public boolean nonZeroAt(int i) {
         int k = searchForIndex(i);
         return k < cardinality && indices[k] == i;
     }
 
-    @Override
-    public <T extends Vector> T to(VectorFactory<T> factory) {
-        if (factory.outputClass == CompressedVector.class) {
-            return factory.outputClass.cast(this);
-        }
-
-        return super.to(factory);
-    }
-
-    @Override
-    public Vector blankOfLength(int length) {
-        return CompressedVector.zero(length);
-    }
-
-    @Override
     public byte[] toBinary() {
         int size = 1 +                // 1 byte: class tag
                    4 +                // 4 bytes: length
@@ -416,7 +288,7 @@ public class CompressedVector extends SparseVector {
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
 
-        buffer.put(VECTOR_TAG);
+        buffer.put(VectorFactory.COMPRESSED_VECTOR_TAG);
         buffer.putInt(length);
         buffer.putInt(cardinality);
 
@@ -424,7 +296,6 @@ public class CompressedVector extends SparseVector {
             buffer.putInt(indices[i]);
             buffer.putDouble(values[i]);
         }
-
         return buffer.array();
     }
 
@@ -439,7 +310,6 @@ public class CompressedVector extends SparseVector {
         if (cardinality == 0 || i > indices[cardinality - 1]) {
             return cardinality;
         }
-
         int left = 0;
         int right = cardinality;
 
@@ -453,7 +323,6 @@ public class CompressedVector extends SparseVector {
                 return p;
             }
         }
-
         return left;
     }
 
@@ -462,11 +331,9 @@ public class CompressedVector extends SparseVector {
         if (value == 0.0) {
             return;
         }
-
         if (values.length < cardinality + 1) {
             growUp();
         }
-
         if (cardinality - k > 0) {
             System.arraycopy(values, k, values, k + 1, cardinality - k);
             System.arraycopy(indices, k, indices, k + 1, cardinality - k);
@@ -491,7 +358,6 @@ public class CompressedVector extends SparseVector {
             System.arraycopy(values, k + 1, values, k, cardinality - k);
             System.arraycopy(indices, k + 1, indices, k, cardinality - k);
         }
-
 //        for (int kk = k; kk < cardinality; kk++) {
 //            values[kk] = values[kk + 1];
 //            indices[kk] = indices[kk + 1];
@@ -526,24 +392,20 @@ public class CompressedVector extends SparseVector {
         return Math.min(length, ((capacity / MINIMUM_SIZE) + 1) * MINIMUM_SIZE);
     }
 
-    @Override
     public VectorIterator nonZeroIterator() {
         return new VectorIterator(length) {
             private boolean currentIsRemoved = false;
             private int k = -1;
             private int removedIndex = -1;
 
-            @Override
             public int index() {
                 return currentIsRemoved ? removedIndex : indices[k];
             }
 
-            @Override
             public double get() {
                 return currentIsRemoved ? 0.0 : values[k];
             }
 
-            @Override
             public void set(double value) {
                 if (value == 0.0 && !currentIsRemoved) {
                     currentIsRemoved = true;
@@ -557,12 +419,10 @@ public class CompressedVector extends SparseVector {
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return k + 1 < cardinality;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -580,17 +440,14 @@ public class CompressedVector extends SparseVector {
             private int i = -1;
             private boolean currentNonZero = false;
 
-            @Override
             public int index() {
                 return i;
             }
 
-            @Override
             public double get() {
                 return currentNonZero ? values[k] : 0.0;
             }
 
-            @Override
             public void set(double value) {
                 if (currentNonZero) {
                     if (value == 0.0) {
@@ -605,12 +462,10 @@ public class CompressedVector extends SparseVector {
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return i + 1 < length;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -618,10 +473,8 @@ public class CompressedVector extends SparseVector {
                 if (currentNonZero) {
                     k++;
                 }
-
                 i++;
                 currentNonZero = k < cardinality && indices[k] == i;
-
                 return get();
             }
         };

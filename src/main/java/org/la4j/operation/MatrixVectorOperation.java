@@ -43,17 +43,14 @@ public abstract class MatrixVectorOperation<R> {
 
     public VectorOperation<R> partiallyApply(final DenseMatrix a) {
         return new VectorOperation<R>() {
-            @Override
             public R apply(final SparseVector b) {
                 return MatrixVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public R apply(final DenseVector b) {
                 return MatrixVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public void ensureApplicableTo(final Vector b) {
                 MatrixVectorOperation.this.ensureApplicableTo(a, b);
             }
@@ -62,17 +59,14 @@ public abstract class MatrixVectorOperation<R> {
 
     public VectorOperation<R> partiallyApply(final RowMajorSparseMatrix a) {
         return new VectorOperation<R>() {
-            @Override
             public R apply(final SparseVector b) {
                 return MatrixVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public R apply(final DenseVector b) {
                 return MatrixVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public void ensureApplicableTo(final Vector b) {
                 MatrixVectorOperation.this.ensureApplicableTo(a, b);
             }
@@ -81,17 +75,14 @@ public abstract class MatrixVectorOperation<R> {
 
     public VectorOperation<R> partiallyApply(final ColumnMajorSparseMatrix a) {
         return new VectorOperation<R>() {
-            @Override
             public R apply(final SparseVector b) {
                 return MatrixVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public R apply(final DenseVector b) {
                 return MatrixVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public void ensureApplicableTo(final Vector b) {
                 MatrixVectorOperation.this.ensureApplicableTo(a, b);
             }

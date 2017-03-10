@@ -27,27 +27,22 @@ public abstract class ColumnMajorMatrixIterator extends MatrixIterator {
     super(rows, columns);
   }
 
-    @Override
     protected int cursor() {
     return columnIndex() * rows + rowIndex();
   }
 
-    @Override
     public MatrixIterator orElseAdd(final MatrixIterator those) {
         return new CursorToColumnMajorMatrixIterator(super.orElse(those, JoinFunction.ADD), rows, columns);
     }
 
-    @Override
     public MatrixIterator orElseSubtract(final MatrixIterator those) {
         return new CursorToColumnMajorMatrixIterator(super.orElse(those, JoinFunction.SUB), rows, columns);
     }
 
-    @Override
     public MatrixIterator andAlsoMultiply(MatrixIterator those) {
         return new CursorToColumnMajorMatrixIterator(super.andAlso(those, JoinFunction.MUL), rows, columns);
     }
 
-    @Override
     public MatrixIterator andAlsoDivide(MatrixIterator those) {
         return new CursorToColumnMajorMatrixIterator(super.andAlso(those, JoinFunction.DIV), rows, columns);
     }

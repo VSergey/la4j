@@ -1,5 +1,7 @@
 package org.la4j;
 
+import org.la4j.matrix.MatrixFactory;
+
 import java.util.Arrays;
 
 public class M {
@@ -9,19 +11,20 @@ public class M {
     }
 
     public static Matrix m(double[]... values) {
-        return Matrix.from2DArray(values);
+        return Matrices.BASIC_2D.from2DArray(values);
     }
 
     public static Iterable<Matrix> ms(double[]... values) {
+        Matrix matrix = m(values);
         return Arrays.asList(
-            m(values).to(Matrices.CCS),
-            m(values).to(Matrices.CRS),
-            m(values).to(Matrices.BASIC_1D),
-            m(values).to(Matrices.BASIC_2D)
+                Matrices.CCS.convert(matrix),
+                Matrices.CRS.convert(matrix),
+                Matrices.BASIC_1D.convert(matrix),
+                Matrices.BASIC_2D.convert(matrix)
         );
     }
 
     public static Matrix mz(int rows, int columns) {
-        return Matrix.zero(rows, columns);
+        return MatrixFactory.zeroMatrix(rows, columns);
     }
 }

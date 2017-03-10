@@ -21,10 +21,8 @@
 
 package org.la4j.inversion;
 
-import org.la4j.LinearAlgebra;
+import org.la4j.*;
 import org.la4j.linear.LinearSystemSolver;
-import org.la4j.Matrix;
-import org.la4j.Vector;
 import org.la4j.vector.DenseVector;
 
 public class GaussJordanInverter implements MatrixInverter {
@@ -47,7 +45,7 @@ public class GaussJordanInverter implements MatrixInverter {
 
         for (int i = 0; i < matrix.rows(); i++) {
 
-            Vector b = DenseVector.zero(matrix.rows());
+            Vector b = Vectors.DENSE.zero(matrix.rows());
             b.set(i, 1.0);
 
             try {

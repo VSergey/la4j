@@ -30,32 +30,26 @@ class CursorToRowMajorMatrixIterator extends RowMajorMatrixIterator {
         this.underlying = underlying;
     }
 
-    @Override
     public int rowIndex() {
         return underlying.cursor() / columns;
     }
 
-    @Override
     public int columnIndex() {
         return underlying.cursor() - rowIndex() * columns;
     }
 
-    @Override
     public double get() {
         return underlying.get();
     }
 
-    @Override
     public void set(double value) {
         underlying.set(value);
     }
 
-    @Override
     public boolean hasNext() {
         return underlying.hasNext();
     }
 
-    @Override
     public Double next() {
         return underlying.next();
     }

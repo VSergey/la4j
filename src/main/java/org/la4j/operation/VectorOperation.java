@@ -25,9 +25,9 @@ import org.la4j.Vector;
 import org.la4j.vector.DenseVector;
 import org.la4j.vector.SparseVector;
 
-public abstract class VectorOperation<R> {
-    public abstract R apply(final SparseVector a);
-    public abstract R apply(final DenseVector a);
+public interface VectorOperation<R> {
+    R apply(final SparseVector a);
+    R apply(final DenseVector a);
 
-    public void ensureApplicableTo(final Vector a) { }
+    void ensureApplicableTo(final Vector a);
 }

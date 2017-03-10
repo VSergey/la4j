@@ -21,7 +21,6 @@
 
 package org.la4j.linear;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.la4j.LinearAlgebra;
 

@@ -27,8 +27,6 @@ import org.la4j.matrix.MatrixFactory;
 import org.la4j.matrix.MatrixTest;
 import org.la4j.matrix.DenseMatrix;
 
-import static org.la4j.M.*;
-
 public abstract class DenseMatrixTest<T extends DenseMatrix> extends MatrixTest<T> {
 
     public DenseMatrixTest(MatrixFactory<T> factory) {

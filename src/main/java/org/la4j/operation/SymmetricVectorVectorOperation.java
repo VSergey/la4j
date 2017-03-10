@@ -26,12 +26,10 @@ import org.la4j.vector.SparseVector;
 
 public abstract class SymmetricVectorVectorOperation<R> extends VectorVectorOperation<R> {
 
-    @Override
     public R apply(SparseVector a, DenseVector b) {
         return applySymmetric(b, a);
     }
 
-    @Override
     public R apply(DenseVector a, SparseVector b) {
         return applySymmetric(a, b);
     }

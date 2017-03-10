@@ -44,7 +44,6 @@ public class GaussianSolver extends AbstractSolver implements LinearSystemSolver
         this.aa = a.copyOfColumns(unknowns() + 1);
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
@@ -59,7 +58,7 @@ public class GaussianSolver extends AbstractSolver implements LinearSystemSolver
         }
 
         // the 2nd phase
-        Vector x = b.blankOfLength(aa.columns() - 1);
+        Vector x = b.blank(aa.columns() - 1);
         backSubstitution(aa, x);
 
         return x;
@@ -114,7 +113,6 @@ public class GaussianSolver extends AbstractSolver implements LinearSystemSolver
         }
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         return matrix.rows() == matrix.columns();
     }

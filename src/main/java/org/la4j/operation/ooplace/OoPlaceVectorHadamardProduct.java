@@ -29,7 +29,6 @@ import org.la4j.vector.SparseVector;
 
 public class OoPlaceVectorHadamardProduct extends SymmetricVectorVectorOperation<Vector> {
 
-    @Override
     public Vector apply(SparseVector a, SparseVector b) {
         VectorIterator these = a.nonZeroIterator();
         VectorIterator those = b.nonZeroIterator();
@@ -41,22 +40,18 @@ public class OoPlaceVectorHadamardProduct extends SymmetricVectorVectorOperation
             int i = both.index();
             result.set(i, x);
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(DenseVector a, DenseVector b) {
         Vector result = a.blank();
 
         for (int i = 0; i < a.length(); i++) {
             result.set(i, a.get(i) * b.get(i));
         }
-
         return result;
     }
 
-    @Override
     public Vector applySymmetric(DenseVector a, SparseVector b) {
         Vector result = b.blank();
         VectorIterator it = b.nonZeroIterator();
@@ -66,7 +61,6 @@ public class OoPlaceVectorHadamardProduct extends SymmetricVectorVectorOperation
             int i = it.index();
             result.set(i, x * a.get(i));
         }
-
         return result;
     }
 

@@ -31,7 +31,6 @@ import org.la4j.vector.SparseVector;
 
 public class OoPlaceInnerProduct extends SymmetricVectorVectorOperation<Double> {
 
-    @Override
     public Double apply(final SparseVector a, final SparseVector b) {
         VectorIterator these = a.nonZeroIterator();
         VectorIterator those = b.nonZeroIterator();
@@ -39,12 +38,10 @@ public class OoPlaceInnerProduct extends SymmetricVectorVectorOperation<Double> 
         return these.innerProduct(those);
     }
 
-    @Override
     public Double applySymmetric(DenseVector a, SparseVector b) {
         return b.foldNonZero(Vectors.asSumFunctionAccumulator(0.0, dot(a)));
     }
 
-    @Override
     public Double apply(final DenseVector a, final DenseVector b) {
         double result = 0.0;
 
@@ -56,12 +53,7 @@ public class OoPlaceInnerProduct extends SymmetricVectorVectorOperation<Double> 
     }
 
     private VectorFunction dot(final Vector b) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return b.get(i) * value;
-            }
-        };
+        return (i, value) -> b.get(i) * value;
     }
 
     @Override

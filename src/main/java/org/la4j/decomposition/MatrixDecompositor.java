@@ -27,31 +27,22 @@ import java.io.Serializable;
 
 /**
  * Interface for implementing various matrix decompositions. More details
- * <p><a href="http://mathworld.wolfram.com/MatrixDecomposition.html">
- * here.</a>
- * </p>
+ * <p><a href="http://mathworld.wolfram.com/MatrixDecomposition.html">here.</a></p>
  */
 public interface MatrixDecompositor extends Serializable {
 
     /**
      * Decomposes the wrapped matrix.
-     *
-     * @return
      */
     Matrix[] decompose();
 
     /**
      * Returns the self matrix of this decompositor.
-     *
-     * @return
      */
     Matrix self();
 
     /**
      * Checks whether this decompositor is applicable to given matrix or not.
-     *
-     * @param matrix
-     * @return
      */
     boolean applicableTo(Matrix matrix);
 }

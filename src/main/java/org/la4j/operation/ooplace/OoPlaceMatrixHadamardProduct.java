@@ -32,7 +32,6 @@ import org.la4j.matrix.SparseMatrix;
 
 public class OoPlaceMatrixHadamardProduct extends SymmetricMatrixMatrixOperation<Matrix> {
 
-    @Override
     public Matrix applySymmetric(DenseMatrix a, SparseMatrix b) {
         Matrix result = b.blank();
         MatrixIterator it = b.nonZeroIterator();
@@ -43,11 +42,9 @@ public class OoPlaceMatrixHadamardProduct extends SymmetricMatrixMatrixOperation
             int j = it.columnIndex();
             result.set(i, j, a.get(i, j) * x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySymmetric(SparseMatrix a, SparseMatrix b) {
         Matrix result = a.blank();
         MatrixIterator these = a.nonZeroIterator();
@@ -60,11 +57,9 @@ public class OoPlaceMatrixHadamardProduct extends SymmetricMatrixMatrixOperation
             int j = both.columnIndex();
             result.set(i, j, x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySymmetric(RowMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         Matrix result = a.blank();
         RowMajorMatrixIterator these = a.nonZeroRowMajorIterator();
@@ -81,7 +76,6 @@ public class OoPlaceMatrixHadamardProduct extends SymmetricMatrixMatrixOperation
         return result;
     }
 
-    @Override
     public Matrix apply(DenseMatrix a, DenseMatrix b) {
         Matrix result = a.blank();
 
@@ -94,7 +88,6 @@ public class OoPlaceMatrixHadamardProduct extends SymmetricMatrixMatrixOperation
         return result;
     }
 
-    @Override
     public void ensureApplicableTo(Matrix a, Matrix b) {
         if (a.rows() != b.rows() || a.columns() != b.columns()) {
             throw new IllegalArgumentException(

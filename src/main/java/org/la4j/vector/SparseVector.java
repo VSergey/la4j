@@ -22,23 +22,15 @@
 package org.la4j.vector;
 
 import java.text.NumberFormat;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Random;
 
+import org.la4j.*;
 import org.la4j.iterator.VectorIterator;
-import org.la4j.Matrix;
 import org.la4j.matrix.sparse.CRSMatrix;
-import org.la4j.matrix.ColumnMajorSparseMatrix;
-import org.la4j.matrix.RowMajorSparseMatrix;
-import org.la4j.Vector;
-import org.la4j.Vectors;
 import org.la4j.vector.functor.VectorAccumulator;
 import org.la4j.vector.functor.VectorProcedure;
 import org.la4j.operation.VectorMatrixOperation;
 import org.la4j.operation.VectorOperation;
 import org.la4j.operation.VectorVectorOperation;
-import org.la4j.vector.sparse.CompressedVector;
 
 /**
  * A sparse vector.
@@ -53,7 +45,7 @@ import org.la4j.vector.sparse.CompressedVector;
  * time instead of the O(1) time of a dense data structure.
  * 
  */
-public abstract class SparseVector extends Vector {
+public abstract class SparseVector extends AbstractVector {
 
     protected int cardinality;
 
@@ -64,81 +56,6 @@ public abstract class SparseVector extends Vector {
     public SparseVector(int length, int cardinality) {
         super(length);
         this.cardinality = cardinality;
-    }
-
-    /**
-     * Creates a zero {@link SparseVector} of the given {@code length}.
-     */
-    public static SparseVector zero(int length) {
-        return CompressedVector.zero(length);
-    }
-
-    /**
-     * Creates a zero {@link SparseVector} of the given {@code length} with
-     * the given {@code capacity}.
-     */
-    public static SparseVector zero(int length, int capacity) {
-        return CompressedVector.zero(length);
-    }
-
-    /**
-     * Creates a constant {@link SparseVector} of the given {@code length} with
-     * the given {@code value}.
-     */
-    public static SparseVector random(int length, double density, Random random) {
-        return CompressedVector.random(length, density, random);
-    }
-
-    /**
-     * Creates a new {@link SparseVector} from the given {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static SparseVector fromArray(double[] array) {
-        return CompressedVector.fromArray(array);
-    }
-
-    /**
-     * Parses {@link SparseVector} from the given CSV string.
-     *
-     * @param csv the CSV string representing a vector
-     *
-     * @return a parsed vector
-     */
-    public static SparseVector fromCSV(String csv) {
-        return Vector.fromCSV(csv).to(Vectors.SPARSE);
-    }
-
-    /**
-     * Parses {@link SparseVector} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed vector
-     */
-    public static SparseVector fromMatrixMarket(String mm) {
-        return Vector.fromMatrixMarket(mm).to(Vectors.SPARSE);
-    }
-
-    /**
-     * Creates new {@link SparseVector} from collection
-     *
-     * @param list value list
-     *
-     * @return created vector
-     */
-    public static SparseVector fromCollection(Collection<? extends Number> list) {
-        return Vector.fromCollection(list).to(Vectors.SPARSE);
-    }
-
-    /**
-     * Creates new {@link SparseVector} from given index-value map
-     *
-     * @param map
-     *
-     * @return
-     */
-    public static SparseVector fromMap(Map<Integer, ? extends Number> map, int length) {
-        return CompressedVector.fromMap(map, length);
     }
 
     /**
@@ -226,7 +143,7 @@ public abstract class SparseVector extends Vector {
 
     @Override
     public Vector add(double value) {
-        Vector result = DenseVector.constant(length, value);
+        Vector result = VectorFactory.constant(length, value);
         VectorIterator it = nonZeroIterator();
 
         while (it.hasNext()) {
@@ -288,20 +205,6 @@ public abstract class SparseVector extends Vector {
     public abstract VectorIterator nonZeroIterator();
 
     @Override
-    public <T extends Vector> T to(VectorFactory<T> factory) {
-        T result = factory.apply(length);
-        VectorIterator it = nonZeroIterator();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            result.set(i, x);
-        }
-
-        return result;
-    }
-
-    @Override
     public int hashCode() {
         int result = 17;
         VectorIterator it = nonZeroIterator();
@@ -335,7 +238,7 @@ public abstract class SparseVector extends Vector {
     @Override
     public Matrix toRowMatrix() {
         VectorIterator it = nonZeroIterator();
-        Matrix result = CRSMatrix.zero(1, length);
+        Matrix result = Matrices.CRS.zero(1, length);
 
         while (it.hasNext()) {
             double x = it.next();
@@ -349,7 +252,7 @@ public abstract class SparseVector extends Vector {
     @Override
     public Matrix toColumnMatrix() {
         VectorIterator it = nonZeroIterator();
-        Matrix result = ColumnMajorSparseMatrix.zero(length, 1);
+        Matrix result = Matrices.CCS.zero(length, 1);
 
         while (it.hasNext()) {
             double x = it.next();
@@ -363,7 +266,7 @@ public abstract class SparseVector extends Vector {
     @Override
     public Matrix toDiagonalMatrix() {
         VectorIterator it = nonZeroIterator();
-        Matrix result = RowMajorSparseMatrix.zero(length, length);
+        Matrix result = Matrices.CRS.zero(length, length);
 
         while (it.hasNext()) {
             double x = it.next();

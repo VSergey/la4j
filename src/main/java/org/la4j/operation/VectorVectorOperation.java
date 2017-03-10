@@ -36,17 +36,14 @@ public abstract class VectorVectorOperation<R> {
 
     public VectorOperation<R> partiallyApply(final SparseVector a) {
         return new VectorOperation<R>() {
-            @Override
             public R apply(final SparseVector b) {
                 return VectorVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public R apply(final DenseVector b) {
                 return VectorVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public void ensureApplicableTo(final Vector b) {
                 VectorVectorOperation.this.ensureApplicableTo(a, b);
             }
@@ -55,17 +52,14 @@ public abstract class VectorVectorOperation<R> {
 
     public VectorOperation<R> partiallyApply(final DenseVector a) {
         return new VectorOperation<R>() {
-            @Override
             public R apply(final SparseVector b) {
                 return VectorVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public R apply(final DenseVector b) {
                 return VectorVectorOperation.this.apply(a, b);
             }
 
-            @Override
             public void ensureApplicableTo(final Vector b) {
                 VectorVectorOperation.this.ensureApplicableTo(a, b);
             }

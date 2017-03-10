@@ -26,48 +26,39 @@ import org.la4j.matrix.DenseMatrix;
 import org.la4j.matrix.ColumnMajorSparseMatrix;
 import org.la4j.matrix.RowMajorSparseMatrix;
 
-public abstract class CommonMatrixMatrixOperation<R> extends MatrixMatrixOperation<R> {
-    @Override
+public abstract class CommonMatrixMatrixOperation<R> implements MatrixMatrixOperation<R> {
     public R apply(DenseMatrix a, DenseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(DenseMatrix a, RowMajorSparseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(DenseMatrix a, ColumnMajorSparseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(RowMajorSparseMatrix a, DenseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(RowMajorSparseMatrix a, RowMajorSparseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(RowMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(ColumnMajorSparseMatrix a, DenseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(ColumnMajorSparseMatrix a, RowMajorSparseMatrix b) {
         return applyCommon(a, b);
     }
 
-    @Override
     public R apply(ColumnMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         return applyCommon(a, b);
     }

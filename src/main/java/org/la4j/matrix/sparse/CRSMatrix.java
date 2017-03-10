@@ -28,15 +28,14 @@ package org.la4j.matrix.sparse;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.la4j.*;
+import org.la4j.Vector;
 import org.la4j.iterator.RowMajorMatrixIterator;
 import org.la4j.iterator.VectorIterator;
-import org.la4j.Matrices;
-import org.la4j.Matrix;
 import org.la4j.matrix.MatrixFactory;
 import org.la4j.matrix.RowMajorSparseMatrix;
 import org.la4j.matrix.functor.MatrixFunction;
 import org.la4j.matrix.functor.MatrixProcedure;
-import org.la4j.Vector;
 import org.la4j.vector.functor.VectorProcedure;
 import org.la4j.vector.sparse.CompressedVector;
 
@@ -45,7 +44,6 @@ import org.la4j.vector.sparse.CompressedVector;
  */
 public class CRSMatrix extends RowMajorSparseMatrix {
 
-    private static final byte MATRIX_TAG = (byte) 0x20;
     private static final int MINIMUM_SIZE = 32;
 
     private double[] values;
@@ -79,6 +77,11 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         this.rowPointers = rowPointers;
     }
 
+    @Override
+    public MatrixFactory factory() {
+        return Matrices.CRS;
+    }
+
     /**
      * Creates a zero {@link CRSMatrix} of the given shape:
      * {@code rows} x {@code columns}.
@@ -93,33 +96,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
      */
     public static CRSMatrix zero(int rows, int columns, int capacity) {
         return new CRSMatrix(rows, columns, capacity);
-    }
-
-    /**
-     * Creates a diagonal {@link CRSMatrix} of the given {@code size} whose
-     * diagonal elements are equal to {@code diagonal}.
-     */
-    public static CRSMatrix diagonal(int size, double diagonal) {
-        double[] values = new double[size];
-        int[] columnIndices = new int[size];
-        int[] rowPointers = new int[size + 1];
-
-        for (int i = 0; i < size; i++) {
-            columnIndices[i] = i;
-            rowPointers[i] = i;
-            values[i] = diagonal;
-        }
-
-        rowPointers[size] = size;
-
-        return new CRSMatrix(size, size, size, values, columnIndices, rowPointers);
-    }
-
-    /**
-     * Creates an identity {@link CRSMatrix} of the given {@code size}.
-     */
-    public static CRSMatrix identity(int size) {
-        return CRSMatrix.diagonal(size, 1.0);
     }
 
     /**
@@ -163,11 +139,8 @@ public class CRSMatrix extends RowMajorSparseMatrix {
                 previous = indices[ii];
             }
         }
-
         rowPointers[rows] = cardinality;
-
-        return new CRSMatrix(rows, columns, cardinality, values,
-                             columnIndices, rowPointers);
+        return new CRSMatrix(rows, columns, cardinality, values, columnIndices, rowPointers);
     }
 
     /**
@@ -194,152 +167,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         }
 
         return matrix;
-    }
-
-    /**
-     * Creates a new {@link CRSMatrix} from the given 1D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static CRSMatrix from1DArray(int rows, int columns, double[] array) {
-        CRSMatrix result = CRSMatrix.zero(rows, columns);
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                int k = i * columns + j;
-                if (array[k] != 0.0) {
-                    result.set(i, j, array[k]);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Creates a new {@link CRSMatrix} from the given 2D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static CRSMatrix from2DArray(double[][] array) {
-        int rows = array.length;
-        int columns = array[0].length;
-        CRSMatrix result = CRSMatrix.zero(rows, columns);
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                if (array[i][j] != 0.0) {
-                    result.set(i, j, array[i][j]);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Creates a block {@link CRSMatrix} of the given blocks {@code a},
-     * {@code b}, {@code c} and {@code d}.
-     */
-    public static CRSMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
-        if ((a.rows() != b.rows()) || (a.columns() != c.columns()) ||
-            (c.rows() != d.rows()) || (b.columns() != d.columns())) {
-            throw new IllegalArgumentException("Sides of blocks are incompatible!");
-        }
-
-        int rows = a.rows() + c.rows();
-        int columns = a.columns() + b.columns();
-        ArrayList<Double> values = new ArrayList<Double>();
-        ArrayList<Integer> columnIndices = new ArrayList<Integer>();
-        int[] rowPointers = new int[rows + 1];
-
-        int k = 0;
-        rowPointers[0] = 0;
-        double current = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                if ((i < a.rows()) && (j < a.columns())) {
-                    current = a.get(i, j);
-                }
-                if ((i < a.rows()) && (j > a.columns())) {
-                    current = b.get(i, j);
-                }
-                if ((i > a.rows()) && (j < a.columns())) {
-                    current = c.get(i, j);
-                }
-                if ((i > a.rows()) && (j > a.columns())) {
-                    current = d.get(i, j);
-                }
-                if (Math.abs(current) > Matrices.EPS) {
-                    values.add(current);
-                    columnIndices.add(j);
-                    k++;
-                }
-            }
-            rowPointers[i + 1] = k;
-        }
-        double[] valuesArray = new double[values.size()];
-        int[] colIndArray = new int[columnIndices.size()];
-        for (int i = 0; i < values.size(); i++) {
-            valuesArray[i] = values.get(i);
-            colIndArray[i] = columnIndices.get(i);
-        }
-
-        return new CRSMatrix(rows, columns, k, valuesArray, colIndArray, rowPointers);
-    }
-
-    /**
-     * Decodes {@link CRSMatrix} from the given byte {@code array}.
-     *
-     * @param array the byte array representing a matrix
-     *
-     * @return a decoded matrix
-     */
-    public static CRSMatrix fromBinary(byte[] array) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
-
-        if (buffer.get() != MATRIX_TAG) {
-            throw new IllegalArgumentException("Can not decode CRSMatrix from the given byte array.");
-        }
-
-        int rows = buffer.getInt();
-        int columns = buffer.getInt();
-        int cardinality = buffer.getInt();
-
-        int[] columnIndices = new int[cardinality];
-        double[] values = new double[cardinality];
-        int[] rowPointers = new int[rows + 1];
-
-        for (int i = 0; i < cardinality; i++) {
-            columnIndices[i] = buffer.getInt();
-            values[i] = buffer.getDouble();
-        }
-
-        for (int i = 0; i < rows + 1; i++) {
-            rowPointers[i] = buffer.getInt();
-        }
-
-        return new CRSMatrix(rows, columns, cardinality, values, columnIndices, rowPointers);
-    }
-
-    /**
-     * Parses {@link CRSMatrix} from the given CSV string.
-     *
-     * @param csv the CSV string representing a matrix
-     *
-     * @return a parsed matrix
-     */
-    public static CRSMatrix fromCSV(String csv) {
-        return Matrix.fromCSV(csv).to(Matrices.CRS);
-    }
-
-    /**
-     * Parses {@link CRSMatrix} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed matrix
-     */
-    public static CRSMatrix fromMatrixMarket(String mm) {
-        return Matrix.fromMatrixMarket(mm).to(Matrices.CRS);
     }
 
     @Override
@@ -404,16 +231,14 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         int[] rowIndices = new int[rowCardinality];
 
         System.arraycopy(values, rowPointers[i], rowValues, 0, rowCardinality);
-        System.arraycopy(columnIndices, rowPointers[i], rowIndices, 
-                         0, rowCardinality);
+        System.arraycopy(columnIndices, rowPointers[i], rowIndices, 0, rowCardinality);
 
-        return new CompressedVector(columns, rowCardinality, rowValues, 
-                                    rowIndices);
+        return new CompressedVector(columns, rowCardinality, rowValues, rowIndices);
     }
 
     @Override
     public Vector getColumn(int j) {
-        Vector result = CompressedVector.zero(rows);
+        Vector result = Vectors.COMPRESSED.zero(rows);
         int i = 0;
 
         while (rowPointers[i] < cardinality) {
@@ -424,11 +249,9 @@ public class CRSMatrix extends RowMajorSparseMatrix {
 
             i++;
         }
-
         return result;
     }
 
-    @Override
     public Matrix copyOfShape(int rows, int columns) {
         ensureDimensionsAreCorrect(rows, columns);
 
@@ -469,11 +292,9 @@ public class CRSMatrix extends RowMajorSparseMatrix {
             }
             i++;
         }
-
         for (; i < rows + 1; i++) {
             $rowPointers[i] = $cardinality;
         }
-
         return new CRSMatrix(rows, columns, $cardinality, $values, $columnIndices, $rowPointers);
     }
 
@@ -542,7 +363,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         }
     }
 
-    @Override
     public boolean nonZeroAt(int i, int j) {
         int k = searchForColumnIndex(j, rowPointers[i], rowPointers[i + 1]);
         return k < rowPointers[i + 1] && columnIndices[k] == j;
@@ -552,7 +372,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         if (right - left == 0 || j > columnIndices[right - 1]) {
             return right;
         }
-
         while (left < right) {
             int p = (left + right) / 2;
             if (columnIndices[p] > j) {
@@ -563,7 +382,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
                 return p;
             }
         }
-
         return left;
     }
 
@@ -572,11 +390,9 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         if (value == 0.0) {
             return;
         }
-
         if (values.length < cardinality + 1) {
             growUp();
         }
-
         if (cardinality - k > 0) {
             System.arraycopy(values, k, values, k + 1, cardinality - k);
             System.arraycopy(columnIndices, k, columnIndices, k + 1, cardinality - k);
@@ -593,7 +409,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         for (int ii = i + 1; ii < rows + 1; ii++) {
             rowPointers[ii]++;
         }
-
         cardinality++;
     }
 
@@ -711,9 +526,9 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         // before allocating space, this is perhaps more efficient
         // than single pass and calling grow() when required.
         int newCardinality = 0;
-        for (int i = 0; i < newRows; i++) {
-            for (int j = 0; j < newCols; j++) {
-                if (get(rowIndices[i], columnIndices[j]) != 0.0) {
+        for (int row : rowIndices) {
+            for (int column : columnIndices) {
+                if (get(row, column) != 0.0) {
                     newCardinality++;
                 }
             }
@@ -744,26 +559,10 @@ public class CRSMatrix extends RowMajorSparseMatrix {
                              newColumnIndices, newRowPointers);
     }
 
-    @Override
-    public <T extends Matrix> T to(MatrixFactory<T> factory) {
-        if (factory.outputClass == CRSMatrix.class) {
-            return factory.outputClass.cast(this);
-        }
-
-        return super.to(factory);
-    }
-
-    @Override
-    public Matrix blankOfShape(int rows, int columns) {
-        return CRSMatrix.zero(rows, columns);
-    }
-
-    @Override
     public Iterator<Integer> iteratorOfNonZeroRows() {
         return new Iterator<Integer>() {
             private int i = -1;
 
-            @Override
             public boolean hasNext() {
                 while (i + 1 < rows &&
                        rowPointers[i + 1] < cardinality &&
@@ -774,18 +573,12 @@ public class CRSMatrix extends RowMajorSparseMatrix {
                 return i + 1 < rows && rowPointers[i + 1] < cardinality ;
             }
 
-            @Override
             public Integer next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
                 }
                 i++;
                 return i;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("Can not remove from this iterator.");
             }
         };
     }
@@ -798,22 +591,18 @@ public class CRSMatrix extends RowMajorSparseMatrix {
             private int i = -1;
             private int k = 0;
 
-            @Override
             public int rowIndex() {
                 return i / columns;
             }
 
-            @Override
             public int columnIndex() {
                 return i - rowIndex() * columns;
             }
 
-            @Override
             public double get() {
                 return currentNonZero ? values[k] : 0.0;
             }
 
-            @Override
             public void set(double value) {
                 if (currentNonZero) {
                     if (value == 0.0) {
@@ -828,12 +617,10 @@ public class CRSMatrix extends RowMajorSparseMatrix {
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return i + 1 < limit;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -858,22 +645,18 @@ public class CRSMatrix extends RowMajorSparseMatrix {
             private boolean currentIsRemoved = false;
             private int removedIndex = -1;
 
-            @Override
             public int rowIndex() {
                 return i;
             }
 
-            @Override
             public int columnIndex() {
                 return currentIsRemoved ? removedIndex : columnIndices[k];
             }
 
-            @Override
             public double get() {
                 return currentIsRemoved ? 0.0 : values[k];
             }
 
-            @Override
             public void set(double value) {
                 if (value == 0.0 && !currentIsRemoved) {
                     currentIsRemoved = true;
@@ -887,12 +670,10 @@ public class CRSMatrix extends RowMajorSparseMatrix {
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return k + 1 < cardinality;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -908,43 +689,37 @@ public class CRSMatrix extends RowMajorSparseMatrix {
     }
 
     @Override
-    public VectorIterator nonZeroIteratorOfRow(int i) {
-        final int ii = i;
+    public VectorIterator nonZeroIteratorOfRow(final int i) {
         return new VectorIterator(columns) {
-            private int k = rowPointers[ii] - 1;
+            private int k = rowPointers[i] - 1;
             private boolean currentIsRemoved = false;
             private int removedIndex = -1;
 
-            @Override
             public int index() {
                 return currentIsRemoved ? removedIndex : columnIndices[k];
             }
 
-            @Override
             public double get() {
                 return currentIsRemoved ? 0.0 : values[k];
             }
 
-            @Override
             public void set(double value) {
                 if (value == 0.0 && !currentIsRemoved) {
                     currentIsRemoved = true;
                     removedIndex = columnIndices[k];
-                    CRSMatrix.this.remove(k--, ii);
+                    CRSMatrix.this.remove(k--, i);
                 } else if (value != 0.0 && !currentIsRemoved) {
                     values[k] = value;
                 } else {
                     currentIsRemoved = false;
-                    CRSMatrix.this.insert(++k, ii, removedIndex, value);
+                    CRSMatrix.this.insert(++k, i, removedIndex, value);
                 }
             }
 
-            @Override
             public boolean hasNext() {
-                return k + 1 < rowPointers[ii + 1];
+                return k + 1 < rowPointers[i + 1];
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -956,59 +731,51 @@ public class CRSMatrix extends RowMajorSparseMatrix {
     }
 
     @Override
-    public VectorIterator iteratorOfRow(int i) {
-        final int ii = i;
+    public VectorIterator iteratorOfRow(final int i) {
         return new VectorIterator(columns) {
             private int j = -1;
-            private int k = rowPointers[ii];
+            private int k = rowPointers[i];
 
-            @Override
             public int index() {
                 return j;
             }
 
-            @Override
             public double get() {
-                if (k < rowPointers[ii + 1] && columnIndices[k] == j) {
+                if (k < rowPointers[i + 1] && columnIndices[k] == j) {
                     return values[k];
                 }
                 return 0.0;
             }
 
-            @Override
             public void set(double value) {
-                if (k < rowPointers[ii + 1] && columnIndices[k] == j) {
+                if (k < rowPointers[i + 1] && columnIndices[k] == j) {
                     if (value == 0.0) {
-                        CRSMatrix.this.remove(k, ii);
+                        CRSMatrix.this.remove(k, i);
                     } else {
                         values[k] = value;
                     }
                 } else {
-                    CRSMatrix.this.insert(k, ii, j, value);
+                    CRSMatrix.this.insert(k, i, j, value);
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return j + 1 < columns;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
                 }
                 j++;
-                if (k < rowPointers[ii + 1] && columnIndices[k] == j - 1) {
+                if (k < rowPointers[i + 1] && columnIndices[k] == j - 1) {
                     k++;
                 }
-
                 return get();
             }
         };
     }
 
-    @Override
     public byte[] toBinary() {
         int size = 1 +                 // 1 byte: class tag
                    4 +                 // 4 bytes: rows
@@ -1020,7 +787,7 @@ public class CRSMatrix extends RowMajorSparseMatrix {
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
 
-        buffer.put(MATRIX_TAG);
+        buffer.put(MatrixFactory.CRS_MATRIX_MATRIX_TAG);
         buffer.putInt(rows);
         buffer.putInt(columns);
         buffer.putInt(cardinality);

@@ -27,6 +27,8 @@ package org.la4j;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import org.la4j.matrix.MatrixFactory;
 import org.la4j.matrix.dense.Basic1DMatrix;
@@ -57,12 +59,9 @@ public final class Matrices {
      * matrix</a>.
      */
     public static final MatrixPredicate DIAGONAL_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return (i == j) || Math.abs(value) < EPS;
         }
@@ -74,12 +73,9 @@ public final class Matrices {
      * matrix</a>.
      */
     public static final MatrixPredicate IDENTITY_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return (i == j) ? Math.abs(1.0 - value) < EPS
                     : Math.abs(value) < EPS;
@@ -92,12 +88,9 @@ public final class Matrices {
      * matrix</a>.
      */
     public static final MatrixPredicate ZERO_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return true;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return Math.abs(value) < EPS;
         }
@@ -109,12 +102,9 @@ public final class Matrices {
      * matrix</a>.
      */
     public static final MatrixPredicate TRIDIAGONAL_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return Math.abs(i - j) <= 1 || Math.abs(value) < EPS;
         }
@@ -126,12 +116,9 @@ public final class Matrices {
      * matrix</a>.
      */
     public static final MatrixPredicate POSITIVE_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return true;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return value > 0.0;
         }
@@ -143,12 +130,9 @@ public final class Matrices {
      * matrix</a>.
      */
     public static final MatrixPredicate NEGATIVE_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return true;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return value < 0.0;
         }
@@ -158,12 +142,9 @@ public final class Matrices {
      * Checks whether the matrix is a lower bi-diagonal matrix</a>.
      */
     public static final MatrixPredicate LOWER_BIDIAGONAL_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return !((i == j) || (i == j + 1)) || Math.abs(value) < EPS;
         }
@@ -173,12 +154,9 @@ public final class Matrices {
      * Checks whether the matrix is an upper bidiagonal matrix.
      */
     public static final MatrixPredicate UPPER_BIDIAGONAL_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return !((i == j) || (i == j - 1)) || Math.abs(value) < EPS;
         }
@@ -190,12 +168,9 @@ public final class Matrices {
      * triangular matrix</a>.
      */
     public static final MatrixPredicate LOWER_TRIANGULAR_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return (i <= j) || Math.abs(value) < EPS;
         }
@@ -207,12 +182,9 @@ public final class Matrices {
      * triangular matrix</a>.
      */
     public static final MatrixPredicate UPPER_TRIANGULAR_MATRIX = new MatrixPredicate() {
-        @Override
         public boolean test(int rows, int columns) {
             return rows == columns;
         }
-
-        @Override
         public boolean test(int i, int j, double value) {
             return (i >= j) || Math.abs(value) < EPS;
         }
@@ -242,51 +214,407 @@ public final class Matrices {
     /**
      * A matrix factory that produces zero {@link Basic2DMatrix}.
      */
-    public static final MatrixFactory<Basic2DMatrix> BASIC_2D =
-            new MatrixFactory<Basic2DMatrix>() {
-                @Override
-                public Basic2DMatrix apply(int rows, int columns) {
-                    return Basic2DMatrix.zero(rows, columns);
+    public static final MatrixFactory<Basic2DMatrix> BASIC_2D = new MatrixFactory<Basic2DMatrix>() {
+        public Basic2DMatrix zero(int rows, int columns) {
+            return new Basic2DMatrix(rows, columns);
+        }
+        @Override
+        public Basic2DMatrix convert(Matrix matrix) {
+            if (outputClass == matrix.getClass()) {
+                return outputClass.cast(matrix);
+            }
+            return super.convert(matrix);
+        }
+        public Basic2DMatrix diagonal(int size, double diagonal) {
+            double[][] array = new double[size][size];
+            for (int i = 0; i < size; i++) {
+                array[i][i] = diagonal;
+            }
+            return new Basic2DMatrix(array);
+        }
+        public Basic2DMatrix from1DArray(int rows, int columns, double[] array) {
+            double[][] array2D = new double[rows][columns];
+
+            for (int i = 0; i < rows; i++) {
+                System.arraycopy(array, i * columns, array2D[i], 0, columns);
+            }
+
+            return new Basic2DMatrix(array2D);
+        }
+        public Basic2DMatrix from2DArray(double[][] array) {
+            return new Basic2DMatrix(array);
+        }
+        public Basic2DMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
+            if ((a.rows() != b.rows()) || (a.columns() != c.columns()) ||
+                    (c.rows() != d.rows()) || (b.columns() != d.columns())) {
+                throw new IllegalArgumentException("Sides of blocks are incompatible!");
+            }
+            int rows = a.rows() + c.rows();
+            int columns = a.columns() + b.columns();
+            double[][] array = new double[rows][columns];
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    if ((i < a.rows()) && (j < a.columns())) {
+                        array[i][j] = a.get(i, j);
+                    }
+                    if ((i < a.rows()) && (j > a.columns())) {
+                        array[i][j] = b.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j < a.columns())) {
+                        array[i][j] = c.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j > a.columns())) {
+                        array[i][j] = d.get(i, j);
+                    }
                 }
-            };
+            }
+            return new Basic2DMatrix(array);
+        }
+        public Basic2DMatrix fromBinary(byte[] array) {
+            ByteBuffer buffer = ByteBuffer.wrap(array);
+            if (buffer.get() != BASIC_2_MATRIX_TAG) {
+                throw new IllegalArgumentException("Can not decode Basic2DMatrix from the given byte array.");
+            }
+            int rows = buffer.getInt();
+            int columns = buffer.getInt();
+            double[][] values = new double[rows][columns];
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    values[i][j] = buffer.getDouble();
+                }
+            }
+            return new Basic2DMatrix(values);
+        }
+    };
 
     /**
      * A matrix factory that produces zero {@link Basic1DMatrix}.
      */
-    public static final MatrixFactory<Basic1DMatrix> BASIC_1D =
-            new MatrixFactory<Basic1DMatrix>() {
-                @Override
-                public Basic1DMatrix apply(int rows, int columns) {
-                    return Basic1DMatrix.zero(rows, columns);
+    public static final MatrixFactory<Basic1DMatrix> BASIC_1D = new MatrixFactory<Basic1DMatrix>() {
+        public Basic1DMatrix zero(int rows, int columns) {
+            return new Basic1DMatrix(rows, columns);
+        }
+        @Override
+        public Basic1DMatrix convert(Matrix matrix) {
+            if (outputClass == matrix.getClass()) {
+                return outputClass.cast(matrix);
+            }
+            return super.convert(matrix);
+        }
+        public Basic1DMatrix diagonal(int size, double diagonal) {
+            double[] array = new double[size * size];
+            for (int i = 0; i < size; i++) {
+                array[i * size + i] = diagonal;
+            }
+            return new Basic1DMatrix(size, size, array);
+        }
+        public Basic1DMatrix from1DArray(int rows, int columns, double[] array) {
+            return new Basic1DMatrix(rows, columns, array);
+        }
+        public Basic1DMatrix from2DArray(double[][] array) {
+            int rows = array.length;
+            int columns = array[0].length;
+            double[] array1D = new double[rows * columns];
+            int offset = 0;
+            for (double[] arr : array) {
+                System.arraycopy(arr, 0, array1D, offset, columns);
+                offset += columns;
+            }
+            return new Basic1DMatrix(rows, columns, array1D);
+        }
+        public Basic1DMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
+            if ((a.rows() != b.rows()) || (a.columns() != c.columns()) ||
+                    (c.rows() != d.rows()) || (b.columns() != d.columns())) {
+                throw new IllegalArgumentException("Sides of blocks are incompatible!");
+            }
+            int rows = a.rows() + c.rows();
+            int columns = a.columns() + b.columns();
+            double[] array = new double[rows * columns];
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    if ((i < a.rows()) && (j < a.columns())) {
+                        array[i * rows + j] = a.get(i, j);
+                    }
+                    if ((i < a.rows()) && (j > a.columns())) {
+                        array[i * rows + j] = b.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j < a.columns())) {
+                        array[i * rows + j] = c.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j > a.columns())) {
+                        array[i * rows + j] = d.get(i, j);
+                    }
                 }
-            };
+            }
+            return new Basic1DMatrix(rows, columns, array);
+        }
+        public Basic1DMatrix fromBinary(byte[] array) {
+            ByteBuffer buffer = ByteBuffer.wrap(array);
+
+            if (buffer.get() != BASIC_1_MATRIX_TAG) {
+                throw new IllegalArgumentException("Can not decode Basic1DMatrix from the given byte array.");
+            }
+
+            int rows = buffer.getInt();
+            int columns = buffer.getInt();
+            int capacity = rows * columns;
+            double[] values = new double[capacity];
+
+            for (int i = 0; i < capacity; i++) {
+                values[i] = buffer.getDouble();
+            }
+
+            return new Basic1DMatrix(rows, columns, values);
+        }
+    };
+
+    /**
+     * A matrix factory that produces zero {@link CCSMatrix}.
+     */
+    public static final MatrixFactory<CCSMatrix> CCS = new MatrixFactory<CCSMatrix>() {
+        public CCSMatrix zero(int rows, int columns) {
+            return new CCSMatrix(rows, columns);
+        }
+        @Override
+        public CCSMatrix convert(Matrix matrix) {
+            if (outputClass == matrix.getClass()) {
+                return outputClass.cast(matrix);
+            }
+            return super.convert(matrix);
+        }
+        public CCSMatrix diagonal(int size, double diagonal) {
+            double[] values = new double[size];
+            int[] rowIndices = new int[size];
+            int[] columnPointers = new int[size + 1];
+
+            for (int i = 0; i < size; i++) {
+                rowIndices[i] = i;
+                columnPointers[i] = i;
+                values[i] = diagonal;
+
+            }
+            columnPointers[size] = size;
+            return new CCSMatrix(size, size, size, values, rowIndices, columnPointers);
+        }
+        public CCSMatrix from1DArray(int rows, int columns, double[] array) {
+            CCSMatrix result = Matrices.CCS.zero(rows, columns);
+
+            for (int j = 0; j < columns; j++) {
+                for (int i = 0; i < rows; i++) {
+                    int k = i * columns + j;
+                    if (array[k] != 0.0) {
+                        result.set(i, j, array[k]);
+                    }
+                }
+            }
+
+            return result;
+        }
+        public CCSMatrix from2DArray(double[][] array) {
+            int rows = array.length;
+            int columns = array[0].length;
+            CCSMatrix result = Matrices.CCS.zero(rows, columns);
+
+            for (int j = 0; j < columns; j++) {
+                for (int i = 0; i < rows; i++) {
+                    if (array[i][j] != 0.0) {
+                        result.set(i, j, array[i][j]);
+                    }
+                }
+            }
+
+            return result;
+        }
+        public CCSMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
+            if ((a.rows() != b.rows()) || (a.columns() != c.columns()) ||
+                    (c.rows() != d.rows()) || (b.columns() != d.columns())) {
+                throw new IllegalArgumentException("Sides of blocks are incompatible!");
+            }
+            int rows = a.rows() + c.rows();
+            int columns = a.columns() + b.columns();
+            ArrayList<Double> values = new ArrayList<>();
+            ArrayList<Integer> rowIndices = new ArrayList<>();
+            int[] columnPointers = new int[rows + 1];
+
+            int k = 0;
+            columnPointers[0] = 0;
+            double current = 0;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    if ((i < a.rows()) && (j < a.columns())) {
+                        current = a.get(i, j);
+                    }
+                    if ((i < a.rows()) && (j > a.columns())) {
+                        current = b.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j < a.columns())) {
+                        current = c.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j > a.columns())) {
+                        current = d.get(i, j);
+                    }
+                    if (Math.abs(current) > Matrices.EPS) {
+                        values.add(current);
+                        rowIndices.add(j);
+                        k++;
+                    }
+                }
+                columnPointers[i + 1] = k;
+            }
+            double[] valuesArray = new double[values.size()];
+            int[] rowIndArray = new int[rowIndices.size()];
+            for (int i = 0; i < values.size(); i++) {
+                valuesArray[i] = values.get(i);
+                rowIndArray[i] = rowIndices.get(i);
+            }
+            return new CCSMatrix(rows, columns, k, valuesArray, rowIndArray, columnPointers);
+        }
+        public CCSMatrix fromBinary(byte[] array) {
+            ByteBuffer buffer = ByteBuffer.wrap(array);
+            if (buffer.get() != CCS_MATRIX_MATRIX_TAG) {
+                throw new IllegalArgumentException("Can not decode CCSMatrix from the given byte array.");
+            }
+            int rows = buffer.getInt();
+            int columns = buffer.getInt();
+            int cardinality = buffer.getInt();
+
+            int[] rowIndices = new int[cardinality];
+            double[] values = new double[cardinality];
+            int[] columnsPointers = new int[columns + 1];
+            for (int i = 0; i < cardinality; i++) {
+                rowIndices[i] = buffer.getInt();
+                values[i] = buffer.getDouble();
+            }
+            for (int i = 0; i < columns + 1; i++) {
+                columnsPointers[i] = buffer.getInt();
+            }
+            return new CCSMatrix(rows, columns, cardinality, values, rowIndices, columnsPointers);
+        }
+    };
+
+    /**
+     * A matrix factory that produces zero {@link CRSMatrix}.
+     */
+    public static final MatrixFactory<CRSMatrix> CRS = new MatrixFactory<CRSMatrix>() {
+        public CRSMatrix zero(int rows, int columns) {
+            return new CRSMatrix(rows, columns);
+        }
+        @Override
+        public CRSMatrix convert(Matrix matrix) {
+            if (outputClass == matrix.getClass()) {
+                return outputClass.cast(matrix);
+            }
+            return super.convert(matrix);
+        }
+        public CRSMatrix diagonal(int size, double diagonal) {
+            double[] values = new double[size];
+            int[] columnIndices = new int[size];
+            int[] rowPointers = new int[size + 1];
+
+            for (int i = 0; i < size; i++) {
+                columnIndices[i] = i;
+                rowPointers[i] = i;
+                values[i] = diagonal;
+            }
+            rowPointers[size] = size;
+            return new CRSMatrix(size, size, size, values, columnIndices, rowPointers);
+        }
+        public CRSMatrix from1DArray(int rows, int columns, double[] array) {
+            CRSMatrix result = Matrices.CRS.zero(rows, columns);
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    int k = i * columns + j;
+                    if (array[k] != 0.0) {
+                        result.set(i, j, array[k]);
+                    }
+                }
+            }
+            return result;
+        }
+        public CRSMatrix from2DArray(double[][] array) {
+            int rows = array.length;
+            int columns = array[0].length;
+            CRSMatrix result = Matrices.CRS.zero(rows, columns);
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    if (array[i][j] != 0.0) {
+                        result.set(i, j, array[i][j]);
+                    }
+                }
+            }
+            return result;
+        }
+        public CRSMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
+            if ((a.rows() != b.rows()) || (a.columns() != c.columns()) ||
+                    (c.rows() != d.rows()) || (b.columns() != d.columns())) {
+                throw new IllegalArgumentException("Sides of blocks are incompatible!");
+            }
+            int rows = a.rows() + c.rows();
+            int columns = a.columns() + b.columns();
+            ArrayList<Double> values = new ArrayList<>();
+            ArrayList<Integer> columnIndices = new ArrayList<>();
+            int[] rowPointers = new int[rows + 1];
+            int k = 0;
+            rowPointers[0] = 0;
+            double current = 0;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < columns; j++) {
+                    if ((i < a.rows()) && (j < a.columns())) {
+                        current = a.get(i, j);
+                    }
+                    if ((i < a.rows()) && (j > a.columns())) {
+                        current = b.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j < a.columns())) {
+                        current = c.get(i, j);
+                    }
+                    if ((i > a.rows()) && (j > a.columns())) {
+                        current = d.get(i, j);
+                    }
+                    if (Math.abs(current) > Matrices.EPS) {
+                        values.add(current);
+                        columnIndices.add(j);
+                        k++;
+                    }
+                }
+                rowPointers[i + 1] = k;
+            }
+            double[] valuesArray = new double[values.size()];
+            int[] colIndArray = new int[columnIndices.size()];
+            for (int i = 0; i < values.size(); i++) {
+                valuesArray[i] = values.get(i);
+                colIndArray[i] = columnIndices.get(i);
+            }
+            return new CRSMatrix(rows, columns, k, valuesArray, colIndArray, rowPointers);
+        }
+        public CRSMatrix fromBinary(byte[] array) {
+            ByteBuffer buffer = ByteBuffer.wrap(array);
+
+            if (buffer.get() != CRS_MATRIX_MATRIX_TAG) {
+                throw new IllegalArgumentException("Can not decode CRSMatrix from the given byte array.");
+            }
+            int rows = buffer.getInt();
+            int columns = buffer.getInt();
+            int cardinality = buffer.getInt();
+            int[] columnIndices = new int[cardinality];
+            double[] values = new double[cardinality];
+            int[] rowPointers = new int[rows + 1];
+
+            for (int i = 0; i < cardinality; i++) {
+                columnIndices[i] = buffer.getInt();
+                values[i] = buffer.getDouble();
+            }
+            for (int i = 0; i < rows + 1; i++) {
+                rowPointers[i] = buffer.getInt();
+            }
+            return new CRSMatrix(rows, columns, cardinality, values, columnIndices, rowPointers);
+        }
+    };
 
     /**
      * A default matrix factory for dense matrices.
      */
     public static final MatrixFactory<Basic2DMatrix> DENSE = BASIC_2D;
-
-    /**
-     * A matrix factory that produces zero {@link CCSMatrix}.
-     */
-    public static final MatrixFactory<CCSMatrix> CCS =
-            new MatrixFactory<CCSMatrix>() {
-                @Override
-                public CCSMatrix apply(int rows, int columns) {
-                    return CCSMatrix.zero(rows, columns);
-                }
-            };
-
-    /**
-     * A matrix factory that produces zero {@link CRSMatrix}.
-     */
-    public static final MatrixFactory<CRSMatrix> CRS =
-            new MatrixFactory<CRSMatrix>() {
-                @Override
-                public CRSMatrix apply(int rows, int columns) {
-                    return CRSMatrix.zero(rows, columns);
-                }
-            };
 
     /**
      * A default factory for sparse matrices.
@@ -303,51 +631,30 @@ public final class Matrices {
      */
     public static final MatrixFactory<CCSMatrix> SPARSE_COLUMN_MAJOR = CCS;
 
-    public static final MatrixFactory<?>[] CONVERTERS = {
-            BASIC_2D, BASIC_1D, CRS, CCS
-    };
-
     /**
      * Increases each element of matrix by <code>1</code>.
      */
-    public static final MatrixFunction INC_FUNCTION = new MatrixFunction() {
-        @Override
-        public double evaluate(int i, int j, double value) {
-            return value + 1.0;
-        }
-    };
+    public static final MatrixFunction INC_FUNCTION = (i, j, value) -> value + 1.0;
 
     /**
      * Decreases each element of matrix by <code>1</code>.
      */
-    public static final MatrixFunction DEC_FUNCTION = new MatrixFunction() {
-        @Override
-        public double evaluate(int i, int j, double value) {
-            return value - 1.0;
-        }
-    };
+    public static final MatrixFunction DEC_FUNCTION = (i, j, value) -> value - 1.0;
 
     /**
      * Inverts each element of matrix.
      */
-    public static final MatrixFunction INV_FUNCTION = new MatrixFunction() {
-        @Override
-        public double evaluate(int i, int j, double value) {
-            return -value;
-        }
-    };
+    public static final MatrixFunction INV_FUNCTION = (i, j, value) -> -value;
 
     private Matrices() {}
 
-    private static class SymmetricMatrixPredicate
-            implements AdvancedMatrixPredicate {
+    private static class SymmetricMatrixPredicate implements AdvancedMatrixPredicate {
 
         @Override
         public boolean test(Matrix matrix) {
             if (matrix.rows() != matrix.columns()) {
                 return false;
             }
-
             for (int i = 0; i < matrix.rows(); i++) {
                 for (int j = i + 1; j < matrix.columns(); j++) {
                     double a = matrix.get(i, j);
@@ -358,20 +665,16 @@ public final class Matrices {
                     }
                 }
             }
-
             return true;
         }
     }
 
-    private static class DiagonallyDominantPredicate
-            implements AdvancedMatrixPredicate {
+    private static class DiagonallyDominantPredicate implements AdvancedMatrixPredicate {
 
-        @Override
         public boolean test(Matrix matrix) {
             if (matrix.rows() != matrix.columns()) {
                 return false;
             }
-
             for (int i = 0; i < matrix.rows(); i++) {
                 double sum = 0;
                 for (int j = 0; j < matrix.columns(); j++) {
@@ -383,19 +686,16 @@ public final class Matrices {
                     return false;
                 }
             }
-
             return true;
         }
     }
 
     private static class PositiveDefiniteMatrixPredicate implements AdvancedMatrixPredicate {
 
-        @Override
         public boolean test(Matrix matrix) {
             if (matrix.rows() != matrix.columns()) {
                 return false;
             }
-
             int size = matrix.columns();
             int currentSize = 1;
 
@@ -408,7 +708,6 @@ public final class Matrices {
 
                 currentSize++;
             }
-
             return true;
         }
     }
@@ -421,12 +720,7 @@ public final class Matrices {
      * @return a closure object that does {@code _}
      */
     public static MatrixFunction asConstFunction(final double arg) {
-        return new MatrixFunction() {
-            @Override
-            public double evaluate(int i, int j, double value) {
-                return arg;
-            }
-        };
+        return (i, j, value) -> arg;
     }
 
     /**
@@ -437,12 +731,7 @@ public final class Matrices {
      * @return a closure object that does {@code _ + _}
      */
     public static MatrixFunction asPlusFunction(final double arg) {
-        return new MatrixFunction() {
-            @Override
-            public double evaluate(int i, int j, double value) {
-                return value + arg;
-            }
-        };
+        return (i, j, value) -> value + arg;
     }
 
     /**
@@ -453,12 +742,7 @@ public final class Matrices {
      * @return a closure that does {@code _ - _}
      */
     public static MatrixFunction asMinusFunction(final double arg) {
-        return new MatrixFunction() {
-            @Override
-            public double evaluate(int i, int j, double value) {
-                return value - arg;
-            }
-        };
+        return (i, j, value) -> value - arg;
     }
 
     /**
@@ -469,12 +753,7 @@ public final class Matrices {
      * @return a closure that does {@code _ * _}
      */
     public static MatrixFunction asMulFunction(final double arg) {
-        return new MatrixFunction() {
-            @Override
-            public double evaluate(int i, int j, double value) {
-                return value * arg;
-            }
-        };
+        return (i, j, value) -> value * arg;
     }
 
     /**
@@ -485,12 +764,7 @@ public final class Matrices {
      * @return a closure that does {@code _ / _}
      */
     public static MatrixFunction asDivFunction(final double arg) {
-        return new MatrixFunction() {
-            @Override
-            public double evaluate(int i, int j, double value) {
-                return value / arg;
-            }
-        };
+        return (i, j, value) -> value / arg;
     }
 
     /**
@@ -501,12 +775,7 @@ public final class Matrices {
      * @return a closure that does {@code _ % _}
      */
     public static MatrixFunction asModFunction(final double arg) {
-        return new MatrixFunction() {
-            @Override
-            public double evaluate(int i, int j, double value) {
-                return value % arg;
-            }
-        };
+        return (i, j, value) -> value % arg;
     }
 
     /**
@@ -518,12 +787,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private double result = Double.POSITIVE_INFINITY;
 
-            @Override
             public void update(int i, int j, double value) {
                 result = Math.min(result, value);
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = Double.POSITIVE_INFINITY;
@@ -541,12 +808,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private double result = Double.NEGATIVE_INFINITY;
 
-            @Override
             public void update(int i, int j, double value) {
                 result = Math.max(result, value);
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = Double.NEGATIVE_INFINITY;
@@ -557,7 +822,7 @@ public final class Matrices {
     
     /**
      * Makes an Euclidean norm accumulator that allows to use
-     * {@link org.la4j.Matrix#fold(org.la4j.vector.functor.MatrixAccumulator)}
+     * {@link org.la4j.Matrix#fold(MatrixAccumulator)}
      * method for norm calculation.
      *
      * @return an Euclidean norm accumulator
@@ -566,12 +831,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private BigDecimal result = BigDecimal.valueOf(0.0);
 
-            @Override
             public void update(int i, int j, double value) {
                 result = result.add(BigDecimal.valueOf(value * value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result.setScale(Matrices.ROUND_FACTOR, RoundingMode.CEILING).doubleValue();
                 result = BigDecimal.valueOf(0.0);
@@ -582,7 +845,7 @@ public final class Matrices {
     
     /**
      * Makes an Manhattan norm accumulator that allows to use
-     * {@link org.la4j.Matrix#fold(org.la4j.vector.functor.MatrixAccumulator)}
+     * {@link org.la4j.Matrix#fold(MatrixAccumulator)}
      * method for norm calculation.
      *
      * @return a Manhattan norm accumulator
@@ -591,12 +854,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private double result = 0.0;
 
-            @Override
             public void update(int i, int j, double value) {
                 result += Math.abs(value);
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = 0.0;
@@ -607,7 +868,7 @@ public final class Matrices {
     
     /**
      * Makes an Infinity norm accumulator that allows to use
-     * {@link org.la4j.Matrix#fold(org.la4j.vector.functor.MatrixAccumulator)}
+     * {@link org.la4j.Matrix#fold(MatrixAccumulator)}
      * method for norm calculation.
      *
      * @return an Infinity norm accumulator
@@ -616,12 +877,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
           private double result = Double.NEGATIVE_INFINITY;
           
-          @Override
           public void update(int i, int j, double value) {
             result = Math.max(result, Math.abs(value));
           }
           
-          @Override
           public double accumulate() {
             double value = result;
             result = Double.NEGATIVE_INFINITY;
@@ -641,12 +900,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private BigDecimal result = BigDecimal.valueOf(neutral);
 
-            @Override
             public void update(int i, int j, double value) {
                 result = result.add(BigDecimal.valueOf(value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result.setScale(Matrices.ROUND_FACTOR, RoundingMode.CEILING).doubleValue();
                 result = BigDecimal.valueOf(neutral);
@@ -666,12 +923,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private BigDecimal result = BigDecimal.valueOf(neutral);
 
-            @Override
             public void update(int i, int j, double value) {
                 result = result.multiply(BigDecimal.valueOf(value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result.setScale(Matrices.ROUND_FACTOR, RoundingMode.CEILING).doubleValue();
                 result = BigDecimal.valueOf(neutral);
@@ -693,12 +948,10 @@ public final class Matrices {
         return new MatrixAccumulator() {
             private final MatrixAccumulator sumAccumulator = Matrices.asSumAccumulator(neutral);
 
-            @Override
             public void update(int i, int j, double value) {
                 sumAccumulator.update(i, j, function.evaluate(i, j, value));
             }
 
-            @Override
             public double accumulate() {
                 return sumAccumulator.accumulate();
             }
@@ -715,17 +968,14 @@ public final class Matrices {
      *
      * @return a product function accumulator
      */
-    public static MatrixAccumulator asProductFunctionAccumulator(final double neutral,
-                                                                 final MatrixFunction function) {
+    public static MatrixAccumulator asProductFunctionAccumulator(final double neutral, final MatrixFunction function) {
         return new MatrixAccumulator() {
             private final MatrixAccumulator productAccumulator = Matrices.asProductAccumulator(neutral);
 
-            @Override
             public void update(int i, int j, double value) {
                 productAccumulator.update(i, j, function.evaluate(i, j, value));
             }
 
-            @Override
             public double accumulate() {
                 return productAccumulator.accumulate();
             }
@@ -742,11 +992,6 @@ public final class Matrices {
      * @return an accumulator procedure
      */
     public static MatrixProcedure asAccumulatorProcedure(final MatrixAccumulator accumulator) {
-        return new MatrixProcedure() {
-            @Override
-            public void apply(int i, int j, double value) {
-                accumulator.update(i, j, value);
-            }
-        };
+        return accumulator::update;
     }
 }

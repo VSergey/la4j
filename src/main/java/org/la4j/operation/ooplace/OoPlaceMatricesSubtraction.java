@@ -31,7 +31,6 @@ import org.la4j.matrix.SparseMatrix;
 
 public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matrix> {
 
-    @Override
     public Matrix apply(DenseMatrix a, DenseMatrix b) {
         Matrix result = a.blank();
 
@@ -40,11 +39,9 @@ public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matr
                 result.set(i, j, a.get(i, j) - b.get(i, j));
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySimple(DenseMatrix a, SparseMatrix b) {
         Matrix result = a.copy();
         MatrixIterator it = b.nonZeroIterator();
@@ -55,11 +52,9 @@ public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matr
             int j = it.columnIndex();
             result.set(i, j, result.get(i, j) - x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySimple(SparseMatrix a, DenseMatrix b) {
         Matrix result = b.multiply(-1.0);
         MatrixIterator it = a.nonZeroIterator();
@@ -70,11 +65,9 @@ public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matr
             int j = it.columnIndex();
             result.set(i, j, result.get(i, j) + x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySimple(SparseMatrix a, SparseMatrix b) {
         Matrix result = a.blank();
         MatrixIterator these = a.nonZeroIterator();
@@ -87,11 +80,9 @@ public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matr
             int j = both.columnIndex();
             result.set(i, j, x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(RowMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         Matrix result = a.blank();
         MatrixIterator these = a.nonZeroRowMajorIterator();
@@ -104,11 +95,9 @@ public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matr
             int j = both.columnIndex();
             result.set(i, j, x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(ColumnMajorSparseMatrix a, RowMajorSparseMatrix b) {
         Matrix result = a.blank();
         MatrixIterator these = a.nonZeroColumnMajorIterator();
@@ -121,11 +110,9 @@ public class OoPlaceMatricesSubtraction extends SimpleMatrixMatrixOperation<Matr
             int j = both.columnIndex();
             result.set(i, j, x);
         }
-
         return result;
     }
 
-    @Override
     public void ensureApplicableTo(Matrix a, Matrix b) {
         if (a.rows() != b.rows() || a.columns() != b.columns()) {
             throw new IllegalArgumentException(

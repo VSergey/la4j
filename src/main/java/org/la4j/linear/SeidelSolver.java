@@ -53,11 +53,10 @@ public class SeidelSolver extends AbstractSolver implements LinearSystemSolver {
         }
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
-        Vector current = b.blankOfLength(unknowns());
+        Vector current = b.blank(unknowns());
 
         while (!a.multiply(current).equals(b)) {
 
@@ -77,7 +76,6 @@ public class SeidelSolver extends AbstractSolver implements LinearSystemSolver {
         return current;
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         return matrix.is(Matrices.DIAGONALLY_DOMINANT_MATRIX);
     }

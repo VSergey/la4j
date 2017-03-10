@@ -39,7 +39,6 @@ public class SweepSolver extends AbstractSolver implements LinearSystemSolver {
         super(a);
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
@@ -47,7 +46,7 @@ public class SweepSolver extends AbstractSolver implements LinearSystemSolver {
         Matrix aa = a.copy();
         Vector bb = b.copy();
 
-        Vector x = b.blankOfLength(aa.columns());
+        Vector x = b.blank(aa.columns());
 
         for (int i = 0; i < aa.rows() - 1; i++) {
 
@@ -92,7 +91,6 @@ public class SweepSolver extends AbstractSolver implements LinearSystemSolver {
         return x;
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         return matrix.is(Matrices.TRIDIAGONAL_MATRIX);
     }

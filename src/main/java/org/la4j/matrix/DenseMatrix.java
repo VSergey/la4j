@@ -21,124 +21,23 @@
 
 package org.la4j.matrix;
 
-import org.la4j.Matrices;
-import org.la4j.Matrix;
-import org.la4j.matrix.dense.Basic1DMatrix;
-import org.la4j.matrix.dense.Basic2DMatrix;
+import org.la4j.*;
 import org.la4j.operation.MatrixMatrixOperation;
 import org.la4j.operation.MatrixOperation;
 import org.la4j.operation.MatrixVectorOperation;
-import org.la4j.Vector;
-import org.la4j.vector.DenseVector;
 
 import java.text.NumberFormat;
-import java.util.Random;
 
-public abstract class DenseMatrix extends Matrix {
+public abstract class DenseMatrix extends AbstractMatrix {
 
     public DenseMatrix(int rows, int columns) {
         super(rows, columns);
     }
 
-    /**
-     * Creates a zero {@link DenseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static DenseMatrix zero(int rows, int columns) {
-        return Basic2DMatrix.zero(rows, columns);
+    @Override
+    public MatrixFactory factory() {
+        return Matrices.DENSE;
     }
-
-    /**
-     * Creates a constant {@link DenseMatrix} of the given shape and {@code value}.
-     */
-    public static DenseMatrix constant(int rows, int columns, double constant) {
-        return Basic2DMatrix.constant(rows, columns, constant);
-    }
-
-    /**
-     * Creates a diagonal {@link DenseMatrix} of the given {@code size} whose
-     * diagonal elements are equal to {@code diagonal}.
-     */
-    public static DenseMatrix diagonal(int size, double diagonal) {
-        return Basic2DMatrix.diagonal(size, diagonal);
-    }
-
-    /**
-     * Creates an unit {@link DenseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static DenseMatrix unit(int rows, int columns) {
-        return Basic2DMatrix.unit(rows, columns);
-    }
-
-    /**
-     * Creates an identity {@link DenseMatrix} of the given {@code size}.
-     */
-    public static DenseMatrix identity(int size) {
-        return Basic2DMatrix.identity(size);
-    }
-
-    /**
-     * Creates a random {@link DenseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static DenseMatrix random(int rows, int columns, Random random) {
-        return Basic2DMatrix.random(rows, columns, random);
-    }
-
-    /**
-     * Creates a random symmetric {@link DenseMatrix} of the given {@code size}.
-     */
-    public static DenseMatrix randomSymmetric(int size, Random random) {
-        return Basic2DMatrix.randomSymmetric(size, random);
-    }
-
-    /**
-     * Creates a {@link DenseMatrix} of the given 1D {@code array} w/o
-     * copying the underlying array.
-     */
-    public static DenseMatrix from1DArray(int rows, int columns, double[] array) {
-        return Basic1DMatrix.from1DArray(rows, columns, array);
-    }
-
-    /**
-     * Creates a {@link DenseMatrix} of the given 2D {@code array} w/o
-     * copying the underlying array.
-     */
-    public static DenseMatrix from2DArray(double[][] array) {
-        return Basic2DMatrix.from2DArray(array);
-    }
-
-    /**
-     * Creates a block {@link DenseMatrix} of the given blocks {@code a},
-     * {@code b}, {@code c} and {@code d}.
-     */
-    public static DenseMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
-        return Basic2DMatrix.block(a, b, c, d);
-    }
-
-    /**
-     * Parses {@link DenseMatrix} from the given CSV string.
-     *
-     * @param csv the CSV string representing a matrix
-     *
-     * @return a parsed matrix
-     */
-    public static DenseMatrix fromCSV(String csv) {
-        return Matrix.fromCSV(csv).to(Matrices.DENSE);
-    }
-
-    /**
-     * Parses {@link DenseMatrix} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed matrix
-     */
-    public static DenseMatrix fromMatrixMarket(String mm) {
-        return Matrix.fromMatrixMarket(mm).to(Matrices.DENSE);
-    }
-
     /**
      * Converts this dense matrix to double array.
      * 
@@ -146,9 +45,8 @@ public abstract class DenseMatrix extends Matrix {
      */
     public abstract double[][] toArray();
 
-    @Override
     public Vector getRow(int i) {
-        Vector result = DenseVector.zero(columns);
+        Vector result = Vectors.DENSE.zero(columns);
 
         for (int j = 0; j < columns; j++) {
             result.set(j, get(i, j));
@@ -157,9 +55,8 @@ public abstract class DenseMatrix extends Matrix {
         return result;
     }
 
-    @Override
     public Vector getColumn(int j) {
-        Vector result = DenseVector.zero(rows);
+        Vector result = Vectors.DENSE.zero(rows);
 
         for (int i = 0; i < rows; i++) {
             result.set(i, get(i, j));
@@ -168,23 +65,19 @@ public abstract class DenseMatrix extends Matrix {
         return result;
     }
 
-    @Override
     public <T> T apply(MatrixOperation<T> operation) {
         operation.ensureApplicableTo(this);
         return operation.apply(this);
     }
 
-    @Override
     public <T> T apply(MatrixMatrixOperation<T> operation, Matrix that) {
         return that.apply(operation.partiallyApply(this));
     }
 
-    @Override
     public <T> T apply(MatrixVectorOperation<T> operation, Vector that) {
         return that.apply(operation.partiallyApply(this));
     }
 
-    @Override
     public String toMatrixMarket(NumberFormat formatter) {
         StringBuilder out = new StringBuilder();
 

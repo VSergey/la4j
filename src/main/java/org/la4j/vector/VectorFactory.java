@@ -21,6 +21,7 @@
 package org.la4j.vector;
 
 import org.la4j.Vector;
+import org.la4j.Vectors;
 import org.la4j.vector.dense.BasicVector;
 import org.la4j.vector.sparse.CompressedVector;
 
@@ -33,74 +34,80 @@ import java.util.*;
  * @param <T>
  */
 public abstract class VectorFactory<T extends Vector> {
+    public static final byte BASIC_VECTOR_TAG = (byte) 0x00;
+    public static final byte COMPRESSED_VECTOR_TAG = (byte) 0x10;
 
     @SuppressWarnings("unchecked cast")
-    public final Class<T> outputClass = (Class<T>) ((ParameterizedType)
+    protected final Class<T> outputClass = (Class<T>) ((ParameterizedType)
             getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
     /**
-     * Create new instance with length size
+     * Create new vector instance with length size
      */
-    public abstract T apply(int length);
+    public abstract T zero(int length);
+
+    /**
+     * Creates new vector from {@code list}
+     */
+    public abstract T fromCollection(Collection<? extends Number> list);
+
+    /**
+     * Creates new vector from {@code list}
+     */
+    public abstract T fromMap(Map<Integer, ? extends Number> map, int length);
+
+    /**
+     * Creates a new vector from the given {@code array} w/o
+     * copying the underlying array.
+     */
+    public abstract T fromArray(double[] array);
+
+    /**
+     * Decodes vector from the given byte {@code array}.
+     *
+     * @param array the byte array representing a vector
+     *
+     * @return a decoded vector
+     */
+    public abstract T fromBinary(byte[] array);
+
+    /**
+     * Converts vector
+     */
+    public abstract T convert(Vector v);
+
+
+
 
     /**
      * Creates a zero {@link Vector} of the given {@code length}.
      */
-    public static Vector zero(int length) {
-        return length > 1000 ? SparseVector.zero(length) : DenseVector.zero(length);
-    }
-
-    /**
-     * Creates a new {@link Vector} from the given {@code array} w/o
-     * copying the underlying array.
-     */
-    public static Vector fromArray(double[] array) {
-        return DenseVector.fromArray(array);
+    public static Vector anyZero(int length) {
+        return length > 1000 ? Vectors.SPARSE.zero(length) : Vectors.DENSE.zero(length);
     }
 
     /**
      * Creates a random {@link Vector} of the given {@code length} with
      * the given {@code Random}.
      */
-    public static Vector random(int length, Random random) {
-        return DenseVector.random(length, random);
+    public static BasicVector random(int length, Random random) {
+        return BasicVector.random(length, random);
     }
 
     /**
      * Creates a constant {@link Vector} of the given {@code length} with
      * the given {@code value}.
      */
-    public static Vector constant(int length, double value) {
-        return DenseVector.constant(length, value);
+    public static BasicVector constant(int length, double value) {
+        return BasicVector.constant(length, value);
     }
 
-    /**
-     * Creates an unit {@link Vector} of the given {@code length}.
-     */
-    public static Vector unit(int length) {
-        return DenseVector.constant(length, 1.0);
-    }
-
-    /**
-     * Creates new {@link org.la4j.vector.dense.BasicVector} from {@code list}
-     */
-    public static Vector fromCollection(Collection<? extends Number> list) {
-        return DenseVector.fromCollection(list);
-    }
-
-    /**
-     * Creates new {@link org.la4j.vector.SparseVector} from {@code list}
-     */
-    public static Vector fromMap(Map<Integer, ? extends Number> map, int length) {
-        return SparseVector.fromMap(map, length);
-    }
-
-    public static Vector fromBinary(byte[] array) {
+    public static Vector fromBinaryArray(byte[] array) {
         switch(array[0]) {
-            case BasicVector.VECTOR_TAG:
-                return BasicVector.fromBinary(array);
-            case CompressedVector.VECTOR_TAG:
-                return CompressedVector.fromBinary(array);
+            case BASIC_VECTOR_TAG:
+                return Vectors.BASIC.fromBinary(array);
+            case COMPRESSED_VECTOR_TAG:
+                return Vectors.COMPRESSED.fromBinary(array);
         }
         throw new IllegalArgumentException("Can't decode Vector from the given byte array. Unknown vector type");
     }
@@ -116,19 +123,19 @@ public abstract class VectorFactory<T extends Vector> {
         StringTokenizer tokenizer = new StringTokenizer(csv, ", ");
         int estimatedLength = csv.length() / (5 + 2) + 1; // 5 symbols per element "0.000"
         // 2 symbols for delimiter ", "
-        Vector result = DenseVector.zero(estimatedLength);
+        Vector result = Vectors.DENSE.zero(estimatedLength);
 
         int i = 0;
         while (tokenizer.hasMoreTokens()) {
             if (result.length() == i) {
-                result = result.copyOfLength((i * 3) / 2 + 1);
+                result = result.copy((i * 3) / 2 + 1);
             }
 
             double x = Double.parseDouble(tokenizer.nextToken());
             result.set(i++, x);
         }
 
-        return result.copyOfLength(i);
+        return result.copy(i);
     }
 
     /**
@@ -164,7 +171,7 @@ public abstract class VectorFactory<T extends Vector> {
         Vector result;
         if ("coordinate".equals(format)) {
             int cardinality = Integer.parseInt(body.nextToken());
-            result = SparseVector.zero(length, cardinality);
+            result = CompressedVector.zero(length, cardinality);
 
             for (int k = 0; k < cardinality; k++) {
                 int i = Integer.parseInt(body.nextToken());
@@ -172,7 +179,7 @@ public abstract class VectorFactory<T extends Vector> {
                 result.set(i - 1, x);
             }
         } else {
-            result = DenseVector.zero(length);
+            result = Vectors.DENSE.zero(length);
 
             for (int i = 0; i < length; i++) {
                 result.set(i, Double.valueOf(body.nextToken()));
@@ -180,5 +187,4 @@ public abstract class VectorFactory<T extends Vector> {
         }
         return result;
     }
-
 }

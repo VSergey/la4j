@@ -29,15 +29,11 @@ public interface MatrixInverter extends Serializable {
 
     /**
      * Inverse matrix.
-     *
-     * @return
      */
     Matrix inverse();
 
     /**
      * Returns the self matrix of this inverter.
-     *
-     * @return
      */
     Matrix self();
 }

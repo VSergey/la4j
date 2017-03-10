@@ -23,8 +23,8 @@ package org.la4j.inversion;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.la4j.LinearAlgebra;
-import org.la4j.Matrix;
+import org.la4j.*;
+import org.la4j.matrix.MatrixFactory;
 
 import static org.la4j.M.*;
 
@@ -41,7 +41,7 @@ public abstract class AbstractInverterTest {
 
             // a * a^-1 = e
             Matrix c = a.multiply(b);
-            Matrix e = Matrix.identity(a.rows());
+            Matrix e = Matrices.SPARSE.diagonal(a.rows(), 1.0);
             Assert.assertTrue(e.equals(c, 1e-9));
         }
     }

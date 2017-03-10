@@ -1,18 +1,19 @@
 package org.la4j.operation.ooplace;
 
+import org.la4j.Matrices;
 import org.la4j.Matrix;
 import org.la4j.matrix.DenseMatrix;
 import org.la4j.matrix.ColumnMajorSparseMatrix;
 import org.la4j.matrix.RowMajorSparseMatrix;
+import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.operation.MatrixOperation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class OoPlaceMatrixByItsTransposeMultiplication extends MatrixOperation<Matrix> {
+public class OoPlaceMatrixByItsTransposeMultiplication implements MatrixOperation<Matrix> {
 
-    @Override
     public Matrix apply(DenseMatrix a) {
         Matrix result = a.blankOfShape(a.rows(), a.rows());
 
@@ -25,11 +26,9 @@ public class OoPlaceMatrixByItsTransposeMultiplication extends MatrixOperation<M
                 result.set(i, j, acc);
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(RowMajorSparseMatrix a) {
         Matrix result = a.blankOfShape(a.rows(), a.rows());
         List<Integer> nzRows = new ArrayList<Integer>();
@@ -38,20 +37,18 @@ public class OoPlaceMatrixByItsTransposeMultiplication extends MatrixOperation<M
         while (it.hasNext()) {
             nzRows.add(it.next());
         }
-
         for (int i: nzRows) {
             for (int j: nzRows) {
                 result.set(i, j, a.nonZeroIteratorOfRow(i)
                                   .innerProduct(a.nonZeroIteratorOfRow(j)));
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(ColumnMajorSparseMatrix a) {
         // TODO: Implement its own algorithm
-        return apply(a.toRowMajorSparseMatrix());
+        CRSMatrix matrix = Matrices.SPARSE_ROW_MAJOR.convert(a);
+        return apply(matrix);
     }
 }

@@ -54,11 +54,10 @@ public class JacobiSolver extends AbstractSolver implements LinearSystemSolver {
         }
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
-        Vector current =b.blankOfLength(unknowns());
+        Vector current =b.blank(unknowns());
 
         // while it is not a solution
         while (!a.multiply(current).equals(b)) {
@@ -83,7 +82,6 @@ public class JacobiSolver extends AbstractSolver implements LinearSystemSolver {
         return current;
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         return matrix.is(Matrices.DIAGONALLY_DOMINANT_MATRIX);
     }

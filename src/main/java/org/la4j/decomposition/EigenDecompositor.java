@@ -23,10 +23,8 @@ package org.la4j.decomposition;
 
 import org.la4j.Matrices;
 import org.la4j.Matrix;
-import org.la4j.matrix.SparseMatrix;
 import org.la4j.Vector;
 import org.la4j.Vectors;
-import org.la4j.vector.DenseVector;
 import org.la4j.vector.functor.VectorAccumulator;
 
 /**
@@ -78,16 +76,15 @@ public class EigenDecompositor extends AbstractDecompositor implements MatrixDec
      * details.
      * </p>
      * 
-     * @param matrix
      * @return { V, D }
      */
     private Matrix[] decomposeSymmetricMatrix(Matrix matrix) {
 
         Matrix d = matrix.copy();
-        Matrix v = SparseMatrix.identity(matrix.rows());
+        Matrix v = Matrices.CRS.diagonal(matrix.rows(), 1.0);
 
         Vector r = generateR(d);
-        Matrix u = SparseMatrix.identity(matrix.rows());
+        Matrix u = Matrices.CRS.diagonal(matrix.rows(), 1.0);
 
         VectorAccumulator normAccumulator = Vectors.mkEuclideanNormAccumulator();
 
@@ -156,7 +153,7 @@ public class EigenDecompositor extends AbstractDecompositor implements MatrixDec
 
     private Vector generateR(Matrix matrix) {
 
-        Vector result = DenseVector.zero(matrix.rows());
+        Vector result = Vectors.DENSE.zero(matrix.rows());
 
         for (int i = 0; i < matrix.rows(); i++) {
             result.set(i, generateRi(matrix, i));
@@ -184,8 +181,8 @@ public class EigenDecompositor extends AbstractDecompositor implements MatrixDec
         u.set(kk, ll, 0.0);
         u.set(ll, kk, 0.0);
 
-        double alpha = 0.0;
-        double beta = 0.0;
+        double alpha;
+        double beta;
 
         if (Math.abs(matrix.get(k, k) - matrix.get(l, l)) < Matrices.EPS) {
             alpha = beta = Math.sqrt(0.5);
@@ -212,7 +209,6 @@ public class EigenDecompositor extends AbstractDecompositor implements MatrixDec
      * details.
      * </p>
      * 
-     * @param matrix
      * @return { P, D }
      */
     private Matrix[] decomposeNonSymmetricMatrix(Matrix matrix) {
@@ -220,12 +216,12 @@ public class EigenDecompositor extends AbstractDecompositor implements MatrixDec
         Matrix A = matrix.copy();
         int n = matrix.columns();
 
-        Matrix v = SparseMatrix.identity(n);
-        Vector d = DenseVector.zero(n);
-        Vector e = DenseVector.zero(n);
+        Matrix v = Matrices.CRS.diagonal(n, 1.0);
+        Vector d = Vectors.DENSE.zero(n);
+        Vector e = Vectors.DENSE.zero(n);
 
         Matrix h = A.copy();
-        Vector ort = DenseVector.zero(n);
+        Vector ort = Vectors.DENSE.zero(n);
 
         // Reduce to Hessenberg form.
         orthes(h, v, ort);

@@ -35,9 +35,9 @@ import org.la4j.vector.SparseVector;
 import java.util.Iterator;
 
 public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<Vector> {
-    @Override
+
     public Vector apply(DenseMatrix a, DenseVector b) {
-        Vector result = b.blankOfLength(a.rows());
+        Vector result = b.blank(a.rows());
 
         for (int i = 0; i < a.rows(); i++) {
             double acc = 0.0;
@@ -50,9 +50,8 @@ public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<V
         return result;
     }
 
-    @Override
     public Vector apply(DenseMatrix a, SparseVector b) {
-        Vector result = DenseVector.zero(a.rows());
+        Vector result = Vectors.DENSE.zero(a.rows());
 
         for (int i = 0; i < a.rows(); i++) {
             double acc = 0.0;
@@ -66,13 +65,11 @@ public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<V
 
             result.set(i, acc);
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(RowMajorSparseMatrix a, DenseVector b) {
-        Vector result = DenseVector.zero(a.rows());
+        Vector result = Vectors.DENSE.zero(a.rows());
         MatrixIterator it = a.nonZeroIterator();
 
         while (it.hasNext()) {
@@ -81,13 +78,11 @@ public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<V
             int j = it.columnIndex();
             result.set(i, result.get(i) + (x * b.get(j)));
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(RowMajorSparseMatrix a, SparseVector b) {
-        Vector result = b.blankOfLength(a.rows());
+        Vector result = b.blank(a.rows());
         Iterator<Integer> it = a.iteratorOfNonZeroRows();
 
         while (it.hasNext()) {
@@ -96,13 +91,11 @@ public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<V
             VectorIterator those = b.nonZeroIterator();
             result.set(i, these.innerProduct(those));
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(ColumnMajorSparseMatrix a, DenseVector b) {
-        Vector result = DenseVector.zero(a.rows());
+        Vector result = Vectors.DENSE.zero(a.rows());
         MatrixIterator it = a.nonZeroIterator();
 
         while (it.hasNext()) {
@@ -111,13 +104,11 @@ public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<V
             int j = it.columnIndex();
             result.set(i, result.get(i) + (x * b.get(j)));
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(ColumnMajorSparseMatrix a, SparseVector b) {
-        Vector result = b.blankOfLength(a.rows());
+        Vector result = b.blank(a.rows());
         VectorIterator it = b.nonZeroIterator();
 
         while (it.hasNext()) {
@@ -131,7 +122,6 @@ public class OoPlaceMatrixByVectorMultiplication extends MatrixVectorOperation<V
                 result.updateAt(i, Vectors.asPlusFunction(x * y));
             }
         }
-
         return result;
     }
 

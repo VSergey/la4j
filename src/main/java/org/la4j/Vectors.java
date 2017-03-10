@@ -24,8 +24,12 @@ package org.la4j;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
 
-import org.la4j.vector.VectorFactory;
+import org.la4j.iterator.VectorIterator;
+import org.la4j.vector.*;
 import org.la4j.vector.dense.BasicVector;
 import org.la4j.vector.functor.VectorAccumulator;
 import org.la4j.vector.functor.VectorFunction;
@@ -39,21 +43,115 @@ public final class Vectors {
     public static final int ROUND_FACTOR = LinearAlgebra.ROUND_FACTOR;
 
     public static final VectorFactory<BasicVector> BASIC = new VectorFactory<BasicVector>() {
-        @Override
-        public BasicVector apply(int length) {
-            return BasicVector.zero(length);
+        public BasicVector zero(int length) {
+            return new BasicVector(length);
+        }
+        public BasicVector fromCollection(Collection<? extends Number> list) {
+            BasicVector vector = new BasicVector(list.size());
+            int i = 0;
+            for (Number x : list) {
+                vector.set(i++, x.doubleValue());
+            }
+            return vector;
+        }
+        public BasicVector fromMap(Map<Integer, ? extends Number> map, int length) {
+            SparseVector vector = Vectors.SPARSE.fromMap(map, length);
+            return convert(vector);
+        }
+        public BasicVector fromArray(double[] array) {
+            return new BasicVector(array);
+        }
+        public BasicVector fromBinary(byte[] array) {
+            ByteBuffer buffer = ByteBuffer.wrap(array);
+            if (buffer.get() != BASIC_VECTOR_TAG) {
+                throw new IllegalArgumentException("Can not decode BasicVector from the given byte array.");
+            }
+            double[] values = new double[buffer.getInt()];
+            for (int i = 0; i < values.length; i++) {
+                values[i] = buffer.getDouble();
+            }
+            return new BasicVector(values);
+        }
+        public BasicVector convert(Vector v) {
+            if (outputClass == v.getClass()) {
+                return outputClass.cast(v);
+            }
+            VectorIterator it = v.iterator();
+            BasicVector result = zero(v.length());
+
+            while (it.hasNext()) {
+                double x = it.next();
+                int i = it.index();
+                result.set(i, x);
+            }
+            return result;
         }
     };
 
     public static final VectorFactory<CompressedVector> COMPRESSED = new VectorFactory<CompressedVector>() {
-        @Override
-        public CompressedVector apply(int length) {
-            return CompressedVector.zero(length);
+        public CompressedVector zero(int length) {
+            return new CompressedVector(length);
         }
-    };
+        public CompressedVector fromCollection(Collection<? extends Number> list) {
+            BasicVector vector = Vectors.BASIC.fromCollection(list);
+            return convert(vector);
+        }
+        public CompressedVector fromMap(Map<Integer, ? extends Number> map, int length) {
+            //TODO goto lambdas
+            int cardinality = map.size();
+            int[] indices = new int[cardinality];
+            double[] values = new double[cardinality];
+            int i = 0;
+            for (Map.Entry<Integer, ? extends Number> entry : map.entrySet()) {
+                int index = entry.getKey();
+                if (index < 0 || index >= length) {
+                    throw new IllegalArgumentException("Check your map: Index must be 0..n-1");
+                }
+                indices[i] = index;
+                values[i] = entry.getValue().doubleValue();
+                i++;
+            }
+            return new CompressedVector(length, cardinality, values, indices);
+        }
+        public CompressedVector fromArray(double[] array) {
+            int length  = array.length;
+            CompressedVector result = new CompressedVector(length);
+            for (int i = 0; i < length; i++) {
+                if (array[i] != 0.0) {
+                    result.set(i, array[i]);
+                }
+            }
+            return result;
+        }
+        public CompressedVector fromBinary(byte[] array) {
+            ByteBuffer buffer = ByteBuffer.wrap(array);
+            if (buffer.get() != COMPRESSED_VECTOR_TAG) {
+                throw new IllegalArgumentException("Can not decode CompressedVector from the given byte array.");
+            }
+            int length = buffer.getInt();
+            int cardinality = buffer.getInt();
+            double[] values = new double[cardinality];
+            int[] indices = new int[cardinality];
+            for (int i = 0; i < cardinality; i++) {
+                indices[i] = buffer.getInt();
+                values[i] = buffer.getDouble();
+            }
+            return new CompressedVector(length, cardinality, values, indices);
+        }
+        public CompressedVector convert(Vector v) {
+            if (outputClass == v.getClass()) {
+                return outputClass.cast(v);
+            }
+            CompressedVector result = zero(v.length());
+            VectorIterator it = (v instanceof SparseVector)? ((SparseVector)v).nonZeroIterator() : v.iterator();
 
-    public static final VectorFactory<?>[] FACTORIES = {
-            BASIC, COMPRESSED
+            while (it.hasNext()) {
+                double x = it.next();
+                int i = it.index();
+                result.set(i, x);
+            }
+            return result;
+        }
     };
 
     public static final VectorFactory<BasicVector> DENSE = BASIC;
@@ -65,66 +163,36 @@ public final class Vectors {
      * <a href="http://mathworld.wolfram.com/ZeroMatrix.html">zero
      * vector</a>.
      */
-    public static final VectorPredicate ZERO_VECTOR = new VectorPredicate() {
-        @Override
-        public boolean test(int i, double value) {
-            return Math.abs(value) < EPS;
-        }
-    };
+    public static final VectorPredicate ZERO_VECTOR = (i, value) -> Math.abs(value) < EPS;
 
     /**
      * Checks whether the vector is a
      * <a href="http://mathworld.wolfram.com/PositiveMatrix.html">positive
      * vector</a>.
      */
-    public static final VectorPredicate POSITIVE_VECTOR = new VectorPredicate() {
-        @Override
-        public boolean test(int i, double value) {
-            return value > 0.0;
-        }
-    };
+    public static final VectorPredicate POSITIVE_VECTOR = (i, value) -> value > 0.0;
 
     /**
      * Checks whether the vector is a
      * <a href="http://mathworld.wolfram.com/NegativeMatrix.html">negative
      * vector</a>.
      */
-    public static final VectorPredicate NEGATIVE_VECTOR = new VectorPredicate() {
-        @Override
-        public boolean test(int i, double value) {
-            return value < 0.0;
-        }
-    };
+    public static final VectorPredicate NEGATIVE_VECTOR = (i, value) -> value < 0.0;
 
     /**
      * Increases each element of vector by <code>1</code>.
      */
-    public static final VectorFunction INC_FUNCTION = new VectorFunction() {
-        @Override
-        public double evaluate(int i, double value) {
-            return value + 1.0;
-        }
-    };
+    public static final VectorFunction INC_FUNCTION = (i, value) -> value + 1.0;
 
     /**
      * Decreases each element of vectors by <code>1</code>.
      */
-    public static final VectorFunction DEC_FUNCTION = new VectorFunction() {
-        @Override
-        public double evaluate(int i, double value) {
-            return value - 1.0;
-        }
-    };
+    public static final VectorFunction DEC_FUNCTION = (i, value) -> value - 1.0;
 
     /**
      * Inverts each element of vector.
      */
-    public static final VectorFunction INV_FUNCTION = new VectorFunction() {
-        @Override
-        public double evaluate(int i, double value) {
-            return -value;
-        }
-    };
+    public static final VectorFunction INV_FUNCTION = (i, value) -> -value;
 
     private Vectors() {}
 
@@ -136,12 +204,7 @@ public final class Vectors {
      * @return a closure object that does {@code _}
      */
     public static VectorFunction asConstFunction(final double arg) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return arg;
-            }
-        };
+        return (i, value) -> arg;
     }
 
     /**
@@ -152,12 +215,7 @@ public final class Vectors {
      * @return a closure object that does {@code _ + _}
      */
     public static VectorFunction asPlusFunction(final double arg) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return value + arg;
-            }
-        };
+        return (i, value) -> value + arg;
     }
 
     /**
@@ -168,12 +226,7 @@ public final class Vectors {
      * @return a closure that does {@code _ - _}
      */
     public static VectorFunction asMinusFunction(final double arg) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return value - arg;
-            }
-        };
+        return (i, value) -> value - arg;
     }
 
     /**
@@ -184,12 +237,7 @@ public final class Vectors {
      * @return a closure that does {@code _ * _}
      */
     public static VectorFunction asMulFunction(final double arg) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return value * arg;
-            }
-        };
+        return (i, value) -> value * arg;
     }
 
     /**
@@ -200,12 +248,7 @@ public final class Vectors {
      * @return a closure that does {@code _ / _}
      */
     public static VectorFunction asDivFunction(final double arg) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return value / arg;
-            }
-        };
+        return (i, value) -> value / arg;
     }
 
     /**
@@ -216,12 +259,7 @@ public final class Vectors {
      * @return a closure that does {@code _ % _}
      */
     public static VectorFunction asModFunction(final double arg) {
-        return new VectorFunction() {
-            @Override
-            public double evaluate(int i, double value) {
-                return value % arg;
-            }
-        };
+        return (i, value) -> value % arg;
     }
 
     /**
@@ -235,12 +273,10 @@ public final class Vectors {
         return new VectorAccumulator() {
             private BigDecimal result = BigDecimal.valueOf(neutral);
 
-            @Override
             public void update(int i, double value) {
                 result = result.add(BigDecimal.valueOf(value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result.setScale(Vectors.ROUND_FACTOR, RoundingMode.CEILING).doubleValue();
                 result = BigDecimal.valueOf(neutral);
@@ -260,12 +296,10 @@ public final class Vectors {
         return new VectorAccumulator() {
             private BigDecimal result = BigDecimal.valueOf(neutral);
 
-            @Override
             public void update(int i, double value) {
                 result = result.multiply(BigDecimal.valueOf(value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result.setScale(Vectors.ROUND_FACTOR, RoundingMode.CEILING).doubleValue();
                 result = BigDecimal.valueOf(neutral);
@@ -283,12 +317,10 @@ public final class Vectors {
         return new VectorAccumulator() {
             private double result = Double.POSITIVE_INFINITY;
 
-            @Override
             public void update(int i, double value) {
                 result = Math.min(result, value);
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = Double.POSITIVE_INFINITY;
@@ -306,12 +338,10 @@ public final class Vectors {
         return new VectorAccumulator() {
             private double result = Double.NEGATIVE_INFINITY;
 
-            @Override
             public void update(int i, double value) {
                 result = Math.max(result, value);
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = Double.NEGATIVE_INFINITY;
@@ -330,12 +360,10 @@ public final class Vectors {
         return new VectorAccumulator() {
             private BigDecimal result = BigDecimal.valueOf(0.0);
 
-            @Override
             public void update(int i, double value) {
                 result = result.add(BigDecimal.valueOf(value * value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result.setScale(Vectors.ROUND_FACTOR, RoundingMode.CEILING).doubleValue();
                 result = BigDecimal.valueOf(0.0);
@@ -354,12 +382,10 @@ public final class Vectors {
         return new VectorAccumulator() {
             private double result = 0.0;
 
-            @Override
             public void update(int i, double value) {
                 result += Math.abs(value);
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = 0.0;
@@ -383,7 +409,6 @@ public final class Vectors {
                 result = Math.max(result, Math.abs(value));
             }
 
-            @Override
             public double accumulate() {
                 double value = result;
                 result = Double.NEGATIVE_INFINITY;
@@ -401,17 +426,13 @@ public final class Vectors {
      *
      * @return a sum function accumulator
      */
-    public static VectorAccumulator asSumFunctionAccumulator(final double neutral,
-                                                             final VectorFunction function) {
+    public static VectorAccumulator asSumFunctionAccumulator(final double neutral, final VectorFunction function) {
         return new VectorAccumulator() {
             private final VectorAccumulator sumAccumulator = Vectors.asSumAccumulator(neutral);
 
-            @Override
             public void update(int i, double value) {
                 sumAccumulator.update(i, function.evaluate(i, value));
             }
-
-            @Override
             public double accumulate() {
                 return sumAccumulator.accumulate();
             }
@@ -428,17 +449,13 @@ public final class Vectors {
      *
      * @return a product function accumulator
      */
-    public static VectorAccumulator asProductFunctionAccumulator(final double neutral,
-                                                                 final VectorFunction function) {
+    public static VectorAccumulator asProductFunctionAccumulator(final double neutral, final VectorFunction function) {
         return new VectorAccumulator() {
             private final VectorAccumulator productAccumulator = Vectors.asProductAccumulator(neutral);
 
-            @Override
             public void update(int i, double value) {
                 productAccumulator.update(i, function.evaluate(i, value));
             }
-
-            @Override
             public double accumulate() {
                 return productAccumulator.accumulate();
             }
@@ -455,11 +472,6 @@ public final class Vectors {
      * @return an accumulator procedure
      */
     public static VectorProcedure asAccumulatorProcedure(final VectorAccumulator accumulator) {
-        return new VectorProcedure() {
-            @Override
-            public void apply(int i, double value) {
-                accumulator.update(i, value);
-            }
-        };
+        return accumulator::update;
     }
 }

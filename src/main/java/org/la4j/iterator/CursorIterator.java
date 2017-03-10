@@ -47,7 +47,6 @@ abstract class CursorIterator implements Iterator<Double> {
         return new CursorIterator() {
             private final EnumSet<IteratorState> state = EnumSet.copyOf(TAKEN_FROM_BOTH);
 
-            @Override
             public int cursor() {
                 if (state.contains(IteratorState.TAKEN_FROM_THESE)) {
                     return these.cursor();
@@ -56,7 +55,6 @@ abstract class CursorIterator implements Iterator<Double> {
                 }
             }
 
-            @Override
             public double get() {
                 if (state.contains(IteratorState.TAKEN_FROM_THESE) &&
                         state.contains(IteratorState.TAKEN_FROM_THOSE)) {
@@ -69,30 +67,23 @@ abstract class CursorIterator implements Iterator<Double> {
                 }
             }
 
-            @Override
             public void set(double value) {
                 throw new UnsupportedOperationException("Composed iterators are read-only for now.");
             }
 
-            @Override
             public boolean hasNext() {
-
                 if (these.hasNext() || those.hasNext()) {
                     return true;
                 }
-
                 if (state.contains(IteratorState.TAKEN_FROM_THESE) && state.contains(IteratorState.THOSE_ARE_EMPTY)) {
                     return false;
                 }
-
                 if (state.contains(IteratorState.TAKEN_FROM_THOSE) && state.contains(IteratorState.THESE_ARE_EMPTY)) {
                     return false;
                 }
-
                 return !state.containsAll(TAKEN_FROM_BOTH);
             }
 
-            @Override
             public Double next() {
                 if (state.contains(IteratorState.TAKEN_FROM_THESE)) {
                     if (these.hasNext()) {
@@ -101,7 +92,6 @@ abstract class CursorIterator implements Iterator<Double> {
                         state.add(IteratorState.THESE_ARE_EMPTY);
                     }
                 }
-
                 if (state.contains(IteratorState.TAKEN_FROM_THOSE)) {
                     if (those.hasNext()) {
                         those.next();
@@ -109,7 +99,6 @@ abstract class CursorIterator implements Iterator<Double> {
                         state.add(IteratorState.THOSE_ARE_EMPTY);
                     }
                 }
-
                 state.remove(IteratorState.TAKEN_FROM_THESE);
                 state.remove(IteratorState.TAKEN_FROM_THOSE);
 
@@ -129,7 +118,6 @@ abstract class CursorIterator implements Iterator<Double> {
                 } else if (state.contains(IteratorState.THOSE_ARE_EMPTY)) {
                     state.add(IteratorState.TAKEN_FROM_THESE);
                 }
-
                 return get();
             }
         };
@@ -148,7 +136,6 @@ abstract class CursorIterator implements Iterator<Double> {
                 doNext();
             }
 
-            @Override
             public int cursor() {
                 return prevCursor;
             }
@@ -180,22 +167,18 @@ abstract class CursorIterator implements Iterator<Double> {
                 }
             }
 
-            @Override
             public double get() {
                 return prevValue;
             }
 
-            @Override
             public void set(double value) {
                 throw new UnsupportedOperationException("Composed iterators are read-only for now.");
             }
 
-            @Override
             public boolean hasNext() {
                 return hasNext;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -206,7 +189,6 @@ abstract class CursorIterator implements Iterator<Double> {
         };
     }
 
-    @Override
     public void remove() {
         throw new UnsupportedOperationException("This will be supported in 0.6.0.");
     }

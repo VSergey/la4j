@@ -30,32 +30,26 @@ public class CursorToColumnMajorMatrixIterator extends ColumnMajorMatrixIterator
         this.underlying = underlying;
     }
 
-    @Override
     public int rowIndex() {
         return underlying.cursor() - columnIndex() * rows;
     }
 
-    @Override
     public int columnIndex() {
         return underlying.cursor() / rows;
     }
 
-    @Override
     public double get() {
         return underlying.get();
     }
 
-    @Override
     public void set(double value) {
         underlying.set(value);
     }
 
-    @Override
     public boolean hasNext() {
         return underlying.hasNext();
     }
 
-    @Override
     public Double next() {
         return underlying.next();
     }

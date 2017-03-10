@@ -47,7 +47,6 @@ public class LeastSquaresSolver extends AbstractSolver implements LinearSystemSo
         this.r = qrr[1];
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
@@ -88,7 +87,6 @@ public class LeastSquaresSolver extends AbstractSolver implements LinearSystemSo
         return x.slice(0, n);
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         return  matrix.rows() >= matrix.columns();
     }

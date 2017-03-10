@@ -7,7 +7,6 @@ public class OoPlaceKroneckerProduct extends CommonMatrixMatrixOperation<Matrix>
 
     // TODO: It should not be common.
 
-    @Override
     public Matrix applyCommon(Matrix a, Matrix b) {
         int n = a.rows() * b.rows();
         int m = a.columns() * b.columns();
@@ -21,7 +20,8 @@ public class OoPlaceKroneckerProduct extends CommonMatrixMatrixOperation<Matrix>
                 result.set(i, j, a.get(i / p, j / q) * b.get(i % p, j % q));
             }
         }
-
         return result;
     }
+
+    public void ensureApplicableTo(Matrix a, Matrix b) { }
 }

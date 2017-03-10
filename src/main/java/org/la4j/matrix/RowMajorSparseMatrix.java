@@ -25,7 +25,6 @@ import org.la4j.Matrices;
 import org.la4j.iterator.MatrixIterator;
 import org.la4j.iterator.VectorIterator;
 import org.la4j.Matrix;
-import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.operation.MatrixMatrixOperation;
 import org.la4j.operation.MatrixOperation;
 import org.la4j.operation.MatrixVectorOperation;
@@ -34,7 +33,6 @@ import org.la4j.Vector;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 public abstract class RowMajorSparseMatrix extends SparseMatrix {
 
@@ -46,106 +44,18 @@ public abstract class RowMajorSparseMatrix extends SparseMatrix {
         super(rows, columns, cardinality);
     }
 
-    /**
-     * Creates a zero {@link RowMajorSparseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static RowMajorSparseMatrix zero(int rows, int columns) {
-        return CRSMatrix.zero(rows, columns);
-    }
-
-    /**
-     * Creates a zero {@link RowMajorSparseMatrix} of the given shape:
-     * {@code rows} x {@code columns} with the given {@code capacity}.
-     */
-    public static RowMajorSparseMatrix zero(int rows, int columns, int capacity) {
-        return CRSMatrix.zero(rows, columns, capacity);
-    }
-
-    /**
-     * Creates a diagonal {@link RowMajorSparseMatrix} of the given {@code size} whose
-     * diagonal elements are equal to {@code diagonal}.
-     */
-    public static RowMajorSparseMatrix diagonal(int size, double diagonal) {
-        return CRSMatrix.diagonal(size, diagonal);
-    }
-
-    /**
-     * Creates an identity {@link RowMajorSparseMatrix} of the given {@code size}.
-     */
-    public static RowMajorSparseMatrix identity(int size) {
-        return CRSMatrix.identity(size);
-    }
-
-    /**
-     * Creates a random {@link RowMajorSparseMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static RowMajorSparseMatrix random(int rows, int columns, double density, Random random) {
-        return CRSMatrix.random(rows, columns, density, random);
-    }
-
-    /**
-     * Creates a random symmetric {@link RowMajorSparseMatrix} of the given {@code size}.
-     */
-    public static RowMajorSparseMatrix randomSymmetric(int size, double density, Random random) {
-        return CRSMatrix.randomSymmetric(size, density, random);
-    }
-
-    /**
-     * Creates a new {@link RowMajorSparseMatrix} from the given 1D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static RowMajorSparseMatrix from1DArray(int rows, int columns, double[] array) {
-        return CRSMatrix.from1DArray(rows, columns, array);
-    }
-
-    /**
-     * Creates a new {@link RowMajorSparseMatrix} from the given 2D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static RowMajorSparseMatrix from2DArray(double[][] array) {
-        return CRSMatrix.from2DArray(array);
-    }
-
-    /**
-     * Creates a block {@link RowMajorSparseMatrix} of the given blocks {@code a},
-     * {@code b}, {@code c} and {@code d}.
-     */
-    public static RowMajorSparseMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
-        return CRSMatrix.block(a, b, c, d);
-    }
-
-    /**
-     * Parses {@link RowMajorSparseMatrix} from the given CSV string.
-     *
-     * @param csv the CSV string representing a matrix
-     *
-     * @return a parsed matrix
-     */
-    public static RowMajorSparseMatrix fromCSV(String csv) {
-        return Matrix.fromCSV(csv).to(Matrices.SPARSE_ROW_MAJOR);
-    }
-
-    /**
-     * Parses {@link RowMajorSparseMatrix} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed matrix
-     */
-    public static RowMajorSparseMatrix fromMatrixMarket(String mm) {
-        return Matrix.fromMatrixMarket(mm).to(Matrices.SPARSE_ROW_MAJOR);
-    }
-
     @Override
+    public MatrixFactory factory() {
+        return Matrices.SPARSE_ROW_MAJOR;
+    }
+
     public boolean isRowMajor() {
         return true;
     }
 
     @Override
     public Matrix transpose() {
-        Matrix result = ColumnMajorSparseMatrix.zero(columns, rows);
+        Matrix result = Matrices.CCS.zero(columns, rows);
         MatrixIterator it = nonZeroRowMajorIterator();
 
         while (it.hasNext()) {
@@ -160,7 +70,7 @@ public abstract class RowMajorSparseMatrix extends SparseMatrix {
 
     @Override
     public Matrix rotate() {
-        Matrix result = ColumnMajorSparseMatrix.zero(columns, rows);
+        Matrix result = Matrices.CCS.zero(columns, rows);
 
         Iterator<Integer> nzRows = iteratorOfNonZeroRows();
         List<Integer> reversedNzRows = new LinkedList<Integer>();
@@ -182,18 +92,15 @@ public abstract class RowMajorSparseMatrix extends SparseMatrix {
 
     public abstract Iterator<Integer> iteratorOfNonZeroRows();
 
-    @Override
     public <T> T apply(MatrixOperation<T> operation) {
         operation.ensureApplicableTo(this);
         return operation.apply(this);
     }
 
-    @Override
     public <T> T apply(MatrixMatrixOperation<T> operation, Matrix that) {
         return that.apply(operation.partiallyApply(this));
     }
 
-    @Override
     public <T> T apply(MatrixVectorOperation<T> operation, Vector that) {
         return that.apply(operation.partiallyApply(this));
     }

@@ -28,15 +28,14 @@ package org.la4j.matrix.sparse;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.la4j.*;
+import org.la4j.Vector;
 import org.la4j.iterator.ColumnMajorMatrixIterator;
 import org.la4j.iterator.VectorIterator;
-import org.la4j.Matrices;
-import org.la4j.Matrix;
 import org.la4j.matrix.ColumnMajorSparseMatrix;
 import org.la4j.matrix.MatrixFactory;
 import org.la4j.matrix.functor.MatrixFunction;
 import org.la4j.matrix.functor.MatrixProcedure;
-import org.la4j.Vector;
 import org.la4j.vector.functor.VectorProcedure;
 import org.la4j.vector.sparse.CompressedVector;
 
@@ -45,7 +44,6 @@ import org.la4j.vector.sparse.CompressedVector;
  */
 public class CCSMatrix extends ColumnMajorSparseMatrix {
 
-    private static final byte MATRIX_TAG = (byte) 0x30;
     private static final int MINIMUM_SIZE = 32;
 
     private double[] values;
@@ -79,12 +77,9 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         this.columnPointers = columnPointers;
     }
 
-    /**
-     * Creates a zero {@link CCSMatrix} of the given shape:
-     * {@code rows} x {@code columns}.
-     */
-    public static CCSMatrix zero(int rows, int columns) {
-        return new CCSMatrix(rows, columns);
+    @Override
+    public MatrixFactory factory() {
+        return Matrices.CCS;
     }
 
     /**
@@ -93,33 +88,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
      */
     public static CCSMatrix zero(int rows, int columns, int capacity) {
         return new CCSMatrix(rows, columns, capacity);
-    }
-
-    /**
-     * Creates a diagonal {@link CCSMatrix} of the given {@code size} whose
-     * diagonal elements are equal to {@code diagonal}.
-     */
-    public static CCSMatrix diagonal(int size, double diagonal) {
-        double[] values = new double[size];
-        int[] rowIndices = new int[size];
-        int[] columnPointers = new int[size + 1];
-
-        for (int i = 0; i < size; i++) {
-            rowIndices[i] = i;
-            columnPointers[i] = i;
-            values[i] = diagonal;
-
-        }
-        columnPointers[size] = size;
-
-        return new CCSMatrix(size, size, size, values, rowIndices, columnPointers);
-    }
-
-    /**
-     * Creates an identity {@link CCSMatrix} of the given {@code size}.
-     */
-    public static CCSMatrix identity(int size) {
-        return CCSMatrix.diagonal(size, 1.0);
     }
 
     /**
@@ -166,8 +134,7 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
 
         columnPointers[columns] = cardinality;
 
-        return new CCSMatrix(rows, columns, cardinality, values,
-                             rowIndices, columnPointers);
+        return new CCSMatrix(rows, columns, cardinality, values, rowIndices, columnPointers);
     }
 
     /**
@@ -196,153 +163,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         return matrix;
     }
 
-    /**
-     * Creates a new {@link CCSMatrix} from the given 1D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static CCSMatrix from1DArray(int rows, int columns, double[] array) {
-        CCSMatrix result = CCSMatrix.zero(rows, columns);
-
-        for (int j = 0; j < columns; j++) {
-            for (int i = 0; i < rows; i++) {
-                int k = i * columns + j;
-                if (array[k] != 0.0) {
-                    result.set(i, j, array[k]);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Creates a new {@link CCSMatrix} from the given 2D {@code array} with
-     * compressing (copying) the underlying array.
-     */
-    public static CCSMatrix from2DArray(double[][] array) {
-        int rows = array.length;
-        int columns = array[0].length;
-        CCSMatrix result = CCSMatrix.zero(rows, columns);
-
-        for (int j = 0; j < columns; j++) {
-            for (int i = 0; i < rows; i++) {
-                if (array[i][j] != 0.0) {
-                    result.set(i, j, array[i][j]);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Creates a block {@link CCSMatrix} of the given blocks {@code a},
-     * {@code b}, {@code c} and {@code d}.
-     */
-    public static CCSMatrix block(Matrix a, Matrix b, Matrix c, Matrix d) {
-        if ((a.rows() != b.rows()) || (a.columns() != c.columns()) ||
-            (c.rows() != d.rows()) || (b.columns() != d.columns())) {
-            throw new IllegalArgumentException("Sides of blocks are incompatible!");
-        }
-
-        int rows = a.rows() + c.rows();
-        int columns = a.columns() + b.columns();
-        ArrayList<Double> values = new ArrayList<Double>();
-        ArrayList<Integer> rowIndices = new ArrayList<Integer>();
-        int[] columnPointers = new int[rows + 1];
-
-        int k = 0;
-        columnPointers[0] = 0;
-        double current = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                if ((i < a.rows()) && (j < a.columns())) {
-                    current = a.get(i, j);
-                }
-                if ((i < a.rows()) && (j > a.columns())) {
-                    current = b.get(i, j);
-                }
-                if ((i > a.rows()) && (j < a.columns())) {
-                    current = c.get(i, j);
-                }
-                if ((i > a.rows()) && (j > a.columns())) {
-                    current = d.get(i, j);
-                }
-                if (Math.abs(current) > Matrices.EPS) {
-                    values.add(current);
-                    rowIndices.add(j);
-                    k++;
-                }
-            }
-            columnPointers[i + 1] = k;
-        }
-        double[] valuesArray = new double[values.size()];
-        int[] rowIndArray = new int[rowIndices.size()];
-        for (int i = 0; i < values.size(); i++) {
-            valuesArray[i] = values.get(i);
-            rowIndArray[i] = rowIndices.get(i);
-        }
-
-        return new CCSMatrix(rows, columns, k, valuesArray, rowIndArray, columnPointers);
-    }
-
-    /**
-     * Decodes {@link CCSMatrix} from the given byte {@code array}.
-     *
-     * @param array the byte array representing a matrix
-     *
-     * @return a decoded matrix
-     */
-    public static CCSMatrix fromBinary(byte[] array) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
-
-        if (buffer.get() != MATRIX_TAG) {
-            throw new IllegalArgumentException("Can not decode CCSMatrix from the given byte array.");
-        }
-
-        int rows = buffer.getInt();
-        int columns = buffer.getInt();
-        int cardinality = buffer.getInt();
-
-        int[] rowIndices = new int[cardinality];
-        double[] values = new double[cardinality];
-        int[] columnsPointers = new int[columns + 1];
-
-        for (int i = 0; i < cardinality; i++) {
-            rowIndices[i] = buffer.getInt();
-            values[i] = buffer.getDouble();
-        }
-
-        for (int i = 0; i < columns + 1; i++) {
-            columnsPointers[i] = buffer.getInt();
-        }
-
-        return new CCSMatrix(rows, columns, cardinality, values, rowIndices, columnsPointers);
-    }
-
-    /**
-     * Parses {@link CCSMatrix} from the given CSV string.
-     *
-     * @param csv the CSV string representing a matrix
-     *
-     * @return a parsed matrix
-     */
-    public static CCSMatrix fromCSV(String csv) {
-        return Matrix.fromCSV(csv).to(Matrices.CCS);
-    }
-
-    /**
-     * Parses {@link CCSMatrix} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed matrix
-     */
-    public static CCSMatrix fromMatrixMarket(String mm) {
-        return Matrix.fromMatrixMarket(mm).to(Matrices.CCS);
-    }
-
-    @Override
     public double getOrElse(int i, int j, double defaultValue) {
         ensureIndexesAreInBounds(i, j);
         int k = searchForRowIndex(i, columnPointers[j], columnPointers[j + 1]);
@@ -354,7 +174,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         return defaultValue;
     }
 
-    @Override
     public void set(int i, int j, double value) {
         ensureIndexesAreInBounds(i, j);
         int k = searchForRowIndex(i, columnPointers[j], columnPointers[j + 1]);
@@ -403,18 +222,15 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         double[] columnValues = new double[columnCardinality];
         int[] columnIndices = new int[columnCardinality];
 
-        System.arraycopy(values, columnPointers[j], columnValues, 0, 
-                         columnCardinality);
-        System.arraycopy(rowIndices, columnPointers[j], columnIndices, 0, 
-                         columnCardinality);
+        System.arraycopy(values, columnPointers[j], columnValues, 0, columnCardinality);
+        System.arraycopy(rowIndices, columnPointers[j], columnIndices, 0, columnCardinality);
 
-        return new CompressedVector(rows, columnCardinality, columnValues, 
-                                    columnIndices);
+        return new CompressedVector(rows, columnCardinality, columnValues, columnIndices);
     }
 
     @Override
     public Vector getRow(int i) {
-        Vector result = CompressedVector.zero(columns);
+        Vector result = Vectors.COMPRESSED.zero(columns);
         int j = 0;
 
         while (columnPointers[j] < cardinality) {
@@ -422,14 +238,12 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
             if (k < columnPointers[j + 1] && rowIndices[k] == i) {
                 result.set(j, values[k]);
             }
-
             j++;
         }
 
         return result;
     }
 
-    @Override
     public Matrix copyOfShape(int rows, int columns) {
         ensureDimensionsAreCorrect(rows, columns);
 
@@ -486,7 +300,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
             for (int i = columnPointers[j]; i < columnPointers[j + 1]; i++, k++) {
                 procedure.apply(rowIndices[i], j, values[i]);
             }
-
             j++;
         }
     }
@@ -504,7 +317,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 }
             }
         }
-
     }
 
     @Override
@@ -543,7 +355,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         }
     }
 
-    @Override
     public boolean nonZeroAt(int i, int j) {
         int k = searchForRowIndex(i, columnPointers[j], columnPointers[j + 1]);
         return k < columnPointers[j + 1] && rowIndices[k] == i;
@@ -553,7 +364,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         if (right - left == 0 || i > rowIndices[right - 1]) {
             return right;
         }
-
         while (left < right) {
             int p = (left + right) / 2;
             if (rowIndices[p] > i) {
@@ -564,7 +374,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 return p;
             }
         }
-
         return left;
     }
 
@@ -574,16 +383,13 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         if (value == 0.0) {
             return;
         }
-
         if (values.length < cardinality + 1) {
             growUp();
         }
-
         if (cardinality - k > 0) {
             System.arraycopy(values, k, values, k + 1, cardinality - k);
             System.arraycopy(rowIndices, k, rowIndices, k + 1, cardinality - k);
         }
-
 //        for (int k = cardinality; k > position; k--) {
 //            values[k] = values[k - 1];
 //            rowIndices[k] = rowIndices[k - 1];
@@ -606,7 +412,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
             System.arraycopy(values, k + 1, values, k, cardinality - k);
             System.arraycopy(rowIndices, k + 1, rowIndices, k, cardinality - k);
         }
-        
 //        for (int kk = k; kk < cardinality; kk++) {
 //            values[kk] = values[kk + 1];
 //            rowIndices[kk] = rowIndices[kk + 1];
@@ -623,7 +428,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
             // This should never happen
             throw new IllegalStateException("This matrix can't grow up.");
         }
-
         int min = (
             (rows != 0 && columns > Integer.MAX_VALUE / rows) ?
             Integer.MAX_VALUE :
@@ -654,7 +458,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 max = values[i];
             }
         }
-
         return (max > 0.0) ? max : 0.0;
     }
 
@@ -667,7 +470,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 min = values[i];
             }
         }
-
         return (min < 0.0) ? min : 0.0;
     }
 
@@ -680,7 +482,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 max = values[k];
             }
         }
-
         return (max > 0.0) ? max : 0.0;
     }
 
@@ -693,7 +494,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 min = values[k];
             }
         }
-
         return (min < 0.0) ? min : 0.0;
     }
 
@@ -713,9 +513,9 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         // before allocating space, this is perhaps more efficient
         // than single pass and calling grow() when required.
         int newCardinality = 0;
-        for (int i = 0; i < newRows; i++) {
-            for (int j = 0; j < newCols; j++) {
-                if (get(rowIndices[i], columnIndices[j]) != 0.0) {
+        for (int row : rowIndices) {
+            for (int column : columnIndices) {
+                if (get(row, column) != 0.0) {
                     newCardinality++;
                 }
             }
@@ -740,53 +540,29 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 }
             }
         }
-
         return new CCSMatrix(newRows, newCols, newCardinality, newValues,
                              newRowIndices, newColumnPointers);
     }
 
-    @Override
-    public <T extends Matrix> T to(MatrixFactory<T> factory) {
-        if (factory.outputClass == CCSMatrix.class) {
-            return factory.outputClass.cast(this);
-        }
-
-        return super.to(factory);
-    }
-
-    @Override
-    public Matrix blankOfShape(int rows, int columns) {
-        return CCSMatrix.zero(rows, columns);
-    }
-
-    @Override
     public Iterator<Integer> iteratorOrNonZeroColumns() {
         return new Iterator<Integer>() {
             private int j = -1;
 
-            @Override
             public boolean hasNext() {
                 while (j + 1 < columns &&
                        columnPointers[j + 1] < cardinality &&
                        columnPointers[j + 1] == columnPointers[j + 2]) {
                     j++;
                 }
-
                 return j + 1 < columns && columnPointers[j + 1] < cardinality;
             }
 
-            @Override
             public Integer next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
                 }
                 j++;
                 return j;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("Can not remove from this iterator.");
             }
         };
     }
@@ -799,22 +575,18 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
             private int i = -1;
             private int k = 0;
 
-            @Override
             public int rowIndex() {
                 return i - columnIndex() * rows;
             }
 
-            @Override
             public int columnIndex() {
                 return i / rows;
             }
 
-            @Override
             public double get() {
                 return currentNonZero ? values[k] : 0.0;
             }
 
-            @Override
             public void set(double value) {
                 if (currentNonZero) {
                     if (value == 0.0) {
@@ -829,24 +601,19 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return i + 1 < limit;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
                 }
-
                 if (currentNonZero) {
                     k++;
                 }
-
                 i++;
                 currentNonZero = k < columnPointers[columnIndex() + 1] && rowIndices[k] == rowIndex();
-
                 return get();
             }
         };
@@ -860,22 +627,18 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
             private boolean currentIsRemoved = false;
             private int removedIndex = -1;
 
-            @Override
             public int rowIndex() {
                 return currentIsRemoved ? removedIndex : rowIndices[k];
             }
 
-            @Override
             public int columnIndex() {
                 return j;
             }
 
-            @Override
             public double get() {
                 return currentIsRemoved ? 0.0 : values[k];
             }
 
-            @Override
             public void set(double value) {
                 if (value == 0.0 && !currentIsRemoved) {
                     currentIsRemoved = true;
@@ -889,12 +652,10 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return k + 1 < cardinality;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -910,43 +671,37 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
     }
 
     @Override
-    public VectorIterator nonZeroIteratorOfColumn(int j) {
-        final int jj = j;
+    public VectorIterator nonZeroIteratorOfColumn(final int j) {
         return new VectorIterator(rows) {
-            private int k = columnPointers[jj] - 1;
+            private int k = columnPointers[j] - 1;
             private boolean currentIsRemoved = false;
             private int removedIndex = -1;
 
-            @Override
             public int index() {
                 return currentIsRemoved ? removedIndex : rowIndices[k];
             }
 
-            @Override
             public double get() {
                 return currentIsRemoved ? 0.0 : values[k];
             }
 
-            @Override
             public void set(double value) {
                 if (value == 0.0 && !currentIsRemoved) {
                     currentIsRemoved = true;
                     removedIndex = rowIndices[k];
-                    CCSMatrix.this.remove(k--, jj);
+                    CCSMatrix.this.remove(k--, j);
                 } else if (value != 0.0 && !currentIsRemoved) {
                     values[k] = value;
                 } else {
                     currentIsRemoved = false;
-                    CCSMatrix.this.insert(++k, removedIndex, jj, value);
+                    CCSMatrix.this.insert(++k, removedIndex, j, value);
                 }
             }
 
-            @Override
             public boolean hasNext() {
-                return k + 1 < columnPointers[jj + 1];
+                return k + 1 < columnPointers[j + 1];
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
@@ -958,53 +713,46 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
     }
 
     @Override
-    public VectorIterator iteratorOfColumn(int j) {
-        final int jj = j;
+    public VectorIterator iteratorOfColumn(final int j) {
         return new VectorIterator(rows) {
             private int i = -1;
-            private int k = columnPointers[jj];
+            private int k = columnPointers[j];
 
-            @Override
             public int index() {
                 return i;
             }
 
-            @Override
             public double get() {
-                if (k < columnPointers[jj + 1] && rowIndices[k] == i) {
+                if (k < columnPointers[j + 1] && rowIndices[k] == i) {
                     return values[k];
                 }
                 return 0.0;
             }
 
-            @Override
             public void set(double value) {
-                if (k < columnPointers[jj + 1] && rowIndices[k] == i) {
+                if (k < columnPointers[j + 1] && rowIndices[k] == i) {
                     if (value == 0.0) {
-                        CCSMatrix.this.remove(k, jj);
+                        CCSMatrix.this.remove(k, j);
                     } else {
                         values[k] = value;
                     }
                 } else {
-                    CCSMatrix.this.insert(k, i, jj, value);
+                    CCSMatrix.this.insert(k, i, j, value);
                 }
             }
 
-            @Override
             public boolean hasNext() {
                 return i + 1 < rows;
             }
 
-            @Override
             public Double next() {
                 if(!hasNext()) {
                     throw new NoSuchElementException();
                 }
                 i++;
-                if (k < columnPointers[jj + 1] && rowIndices[k] == i - 1) {
+                if (k < columnPointers[j + 1] && rowIndices[k] == i - 1) {
                     k++;
                 }
-
                 return get();
             }
         };
@@ -1022,7 +770,7 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
 
-        buffer.put(MATRIX_TAG);
+        buffer.put(MatrixFactory.CCS_MATRIX_MATRIX_TAG);
         buffer.putInt(rows);
         buffer.putInt(columns);
         buffer.putInt(cardinality);

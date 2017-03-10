@@ -29,7 +29,6 @@ import org.la4j.vector.SparseVector;
 
 public class OoPlaceVectorsSubtraction extends VectorVectorOperation<Vector> {
 
-    @Override
     public Vector apply(SparseVector a, SparseVector b) {
         VectorIterator these = a.nonZeroIterator();
         VectorIterator those = b.nonZeroIterator();
@@ -41,11 +40,9 @@ public class OoPlaceVectorsSubtraction extends VectorVectorOperation<Vector> {
             int i = both.index();
             result.set(i, x);
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(SparseVector a, DenseVector b) {
         Vector result = b.multiply(-1.0);
         VectorIterator it = a.nonZeroIterator();
@@ -55,22 +52,18 @@ public class OoPlaceVectorsSubtraction extends VectorVectorOperation<Vector> {
             int i = it.index();
             result.set(i, result.get(i) + x);
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(DenseVector a, DenseVector b) {
         Vector result = a.blank();
 
         for (int i = 0; i < b.length(); i++) {
             result.set(i, a.get(i) - b.get(i));
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(DenseVector a, SparseVector b) {
         Vector result = a.copy();
         VectorIterator it = b.nonZeroIterator();
@@ -80,7 +73,6 @@ public class OoPlaceVectorsSubtraction extends VectorVectorOperation<Vector> {
             int i = it.index();
             result.set(i, result.get(i) - x);
         }
-
         return result;
     }
 

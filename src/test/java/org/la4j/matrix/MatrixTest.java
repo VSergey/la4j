@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 import org.la4j.*;
-import org.la4j.vector.DenseVector;
+import org.la4j.matrix.sparse.CRSMatrix;
 
 import static org.la4j.M.*;
 import static org.la4j.V.*;
@@ -45,11 +45,13 @@ public abstract class MatrixTest<T extends Matrix> {
     }
 
     public T m(double[]... values) {
-        return M.m(values).to(factory);
+        Matrix matrix = M.m(values);
+        return factory.convert(matrix);
     }
 
     public T mz(int rows, int columns) {
-        return M.mz(rows, columns).to(factory);
+        Matrix matrix = M.mz(rows, columns);
+        return factory.convert(matrix);
     }
 
     @Test
@@ -1193,7 +1195,7 @@ public abstract class MatrixTest<T extends Matrix> {
                 k++;
             }
         }
-        ArrayList<Double> b = new ArrayList<Double>();
+        ArrayList<Double> b = new ArrayList<>();
         for (int i = 0; i < matrix2.rows(); i++) {
             for (int j = 0; j < matrix2.columns(); j++) {
                 b.add(matrix2.get(i, j));
@@ -1640,7 +1642,7 @@ public abstract class MatrixTest<T extends Matrix> {
         }
 
         double[] s = d.foldColumns(Vectors.asSumAccumulator(0.0));
-        Assert.assertEquals(DenseVector.fromArray(s), columnSums);
+        Assert.assertEquals(Vectors.DENSE.fromArray(s), columnSums);
 
         Vector rowSums = v(21.033, 21.279, 11.601, 18.889, 22.995, 12.874);
 
@@ -1650,7 +1652,7 @@ public abstract class MatrixTest<T extends Matrix> {
         }
 
         s = d.foldRows(Vectors.asSumAccumulator(0.0));
-        Assert.assertEquals(DenseVector.fromArray(s), rowSums);
+        Assert.assertEquals(Vectors.DENSE.fromArray(s), rowSums);
     }
 
     @Test
@@ -1895,7 +1897,7 @@ public abstract class MatrixTest<T extends Matrix> {
                 "    4     5   3.332e+01\n" +
                 "    5     5   1.200e+01";
 
-        RowMajorSparseMatrix matrix = RowMajorSparseMatrix.zero(5, 5, 8);
+        RowMajorSparseMatrix matrix = CRSMatrix.zero(5, 5, 8);
         matrix.set(0, 0, 1.000e+00);
         matrix.set(1, 1, 1.050e+01);
         matrix.set(2, 2, 1.500e-02);
@@ -1905,7 +1907,7 @@ public abstract class MatrixTest<T extends Matrix> {
         matrix.set(3, 4, 3.332e+01);
         matrix.set(4, 4, 1.200e+01);
 
-        Matrix from_mm_matrix = Matrix.fromMatrixMarket(mm);
+        Matrix from_mm_matrix = MatrixFactory.fromMatrixMarket(mm);
         Assert.assertNotNull(from_mm_matrix);
         Assert.assertTrue(matrix.equals(from_mm_matrix));
 
@@ -1927,7 +1929,7 @@ public abstract class MatrixTest<T extends Matrix> {
                 "14 14  1.7282857345500e-01\n" +
                 "15 15  1.7282857345500e-01\n";
 
-        RowMajorSparseMatrix bcs_matrix = RowMajorSparseMatrix.zero(16, 16, 15);
+        RowMajorSparseMatrix bcs_matrix = CRSMatrix.zero(16, 16, 15);
         bcs_matrix.set(0, 0, 9.2138580510000e-02);
         bcs_matrix.set(1, 1, 9.2138580510000e-02);
         bcs_matrix.set(2, 2, 9.2138580510000e-02);
@@ -1944,7 +1946,7 @@ public abstract class MatrixTest<T extends Matrix> {
         bcs_matrix.set(13, 13, 1.7282857345500e-01);
         bcs_matrix.set(14, 14, 1.7282857345500e-01);
 
-        Matrix bcs_mm_matrix = Matrix.fromMatrixMarket(bcsstm02_mm);
+        Matrix bcs_mm_matrix = MatrixFactory.fromMatrixMarket(bcsstm02_mm);
 
         Assert.assertNotNull(bcs_mm_matrix);
         Assert.assertTrue(bcs_matrix.equals(bcs_mm_matrix));

@@ -21,20 +21,18 @@
 
 package org.la4j.operation.ooplace;
 
+import org.la4j.Matrices;
 import org.la4j.iterator.VectorIterator;
 import org.la4j.Matrix;
-import org.la4j.matrix.DenseMatrix;
-import org.la4j.matrix.ColumnMajorSparseMatrix;
-import org.la4j.matrix.RowMajorSparseMatrix;
+import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.vector.DenseVector;
 import org.la4j.operation.VectorVectorOperation;
 import org.la4j.vector.SparseVector;
 
 public class OoPlaceOuterProduct extends VectorVectorOperation<Matrix> {
 
-    @Override
     public Matrix apply(SparseVector a, SparseVector b) {
-        Matrix result = RowMajorSparseMatrix.zero(a.length(), b.length());
+        Matrix result = Matrices.CRS.zero(a.length(), b.length());
 
         VectorIterator these = a.nonZeroIterator();
         while (these.hasNext()) {
@@ -48,26 +46,22 @@ public class OoPlaceOuterProduct extends VectorVectorOperation<Matrix> {
                 result.set(i, j, x * y);
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(DenseVector a, DenseVector b) {
-        Matrix result = DenseMatrix.zero(a.length(), b.length());
+        Matrix result = Matrices.DENSE.zero(a.length(), b.length());
 
         for (int i = 0; i < a.length(); i++) {
             for (int j = 0; j < b.length(); j++) {
                 result.set(i, j, a.get(i) * b.get(j));
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(DenseVector a, SparseVector b) {
-        Matrix result = ColumnMajorSparseMatrix.zero(a.length(), b.length());
+        Matrix result = Matrices.CCS.zero(a.length(), b.length());
         VectorIterator it = b.nonZeroIterator();
 
         while (it.hasNext()) {
@@ -77,13 +71,11 @@ public class OoPlaceOuterProduct extends VectorVectorOperation<Matrix> {
                 result.set(i, j, x * a.get(i));
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(SparseVector a, DenseVector b) {
-        Matrix result = RowMajorSparseMatrix.zero(a.length(), b.length());
+        Matrix result = Matrices.CRS.zero(a.length(), b.length());
         VectorIterator it = a.nonZeroIterator();
 
         while (it.hasNext()) {
@@ -93,7 +85,6 @@ public class OoPlaceOuterProduct extends VectorVectorOperation<Matrix> {
                 result.set(i, j, x * b.get(j));
             }
         }
-
         return result;
     }
 }

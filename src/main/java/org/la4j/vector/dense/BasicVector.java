@@ -23,14 +23,14 @@ package org.la4j.vector.dense;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
 import java.util.Random;
 
 import org.la4j.Vector;
 import org.la4j.Vectors;
 import org.la4j.vector.DenseVector;
 import org.la4j.vector.VectorFactory;
+
+import static org.la4j.vector.VectorFactory.BASIC_VECTOR_TAG;
 
 /**
  * A basic dense vector implementation using an array.
@@ -46,8 +46,6 @@ import org.la4j.vector.VectorFactory;
  */
 public class BasicVector extends DenseVector {
 
-    public static final byte VECTOR_TAG = (byte) 0x00;
-
     private double[] self;
 
     public BasicVector() {
@@ -61,13 +59,6 @@ public class BasicVector extends DenseVector {
     public BasicVector(double[] array) {
         super(array.length);
         this.self = array;
-    }
-
-    /**
-     * Creates a zero {@link BasicVector} of the given {@code length}.
-     */
-    public static BasicVector zero(int length) {
-        return new BasicVector(length);
     }
 
     /**
@@ -101,95 +92,12 @@ public class BasicVector extends DenseVector {
         return new BasicVector(array);
     }
 
-    /**
-     * Creates a new {@link BasicVector} from the given {@code array} w/o
-     * copying the underlying array.
-     */
-    public static BasicVector fromArray(double[] array) {
-        return new BasicVector(array);
+    public VectorFactory factory() {
+        return Vectors.BASIC;
     }
 
-    /**
-     * Decodes {@link BasicVector} from the given byte {@code array}.
-     *
-     * @param array the byte array representing a vector
-     *
-     * @return a decoded vector
-     */
-    public static BasicVector fromBinary(byte[] array) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
+    public double get(int i) { return self[i]; }
 
-        if (buffer.get() != VECTOR_TAG) {
-            throw new IllegalArgumentException("Can not decode BasicVector from the given byte array.");
-        }
-
-        double[] values = new double[buffer.getInt()];
-        for (int i = 0; i < values.length; i++) {
-            values[i] = buffer.getDouble();
-        }
-
-        return new BasicVector(values);
-    }
-
-    /**
-     * Parses {@link BasicVector} from the given CSV string.
-     *
-     * @param csv the CSV string representing a vector
-     *
-     * @return a parsed vector
-     */
-    public static BasicVector fromCSV(String csv) {
-        return Vector.fromCSV(csv).to(Vectors.BASIC);
-    }
-
-    /**
-     * Parses {@link BasicVector} from the given Matrix Market string.
-     *
-     * @param mm the string in Matrix Market format
-     *
-     * @return a parsed vector
-     */
-    public static BasicVector fromMatrixMarket(String mm) {
-        return Vector.fromMatrixMarket(mm).to(Vectors.BASIC);
-    }
-
-    /**
-     * Creates new {@link BasicVector} from
-     *
-     * @param list list containing doubles
-     *
-     * @return new vector from given double list
-     */
-    public static BasicVector fromCollection(Collection<? extends Number> list) {
-        //TODO goto lambdas
-        double[] self = new double[list.size()];
-        int i = 0;
-        for (Number x : list) {
-            self[i] = x.doubleValue();
-            i++;
-        }
-        return fromArray(self);
-    }
-
-    /**
-     * Creates new {@link BasicVector} from index-value map
-     *
-     * @param map index-value map
-     *
-     * @param length vector length
-     *
-     * @return created vector
-     */
-    public static BasicVector fromMap(Map<Integer, ? extends Number> map, int length) {
-        return Vector.fromMap(map, length).to(Vectors.BASIC);
-    }
-
-    @Override
-    public double get(int i) {
-        return self[i];
-    }
-
-    @Override
     public void set(int i, double value) {
         self[i] = value;
     }
@@ -203,8 +111,7 @@ public class BasicVector extends DenseVector {
         }
     }
 
-    @Override
-    public Vector copyOfLength(int length) {
+    public Vector copy(int length) {
       ensureLengthIsCorrect(length);
 
       double[] $self = new double[length];
@@ -213,28 +120,12 @@ public class BasicVector extends DenseVector {
       return new BasicVector($self);
     }
 
-    @Override
     public double[] toArray() {
         double[] result = new double[length];
         System.arraycopy(self, 0, result, 0, length);
         return result;
     }
 
-    @Override
-    public <T extends Vector> T to(VectorFactory<T> factory) {
-        if (factory.outputClass == BasicVector.class) {
-            return factory.outputClass.cast(this);
-        }
-
-        return super.to(factory);
-    }
-
-    @Override
-    public Vector blankOfLength(int length) {
-        return BasicVector.zero(length);
-    }
-
-    @Override
     public byte[] toBinary() {
         int size = 1 +          // 1 byte: class tag
                    4 +          // 4 bytes: length
@@ -242,7 +133,7 @@ public class BasicVector extends DenseVector {
 
         ByteBuffer buffer = ByteBuffer.allocate(size);
 
-        buffer.put(VECTOR_TAG);
+        buffer.put(BASIC_VECTOR_TAG);
         buffer.putInt(length);
         for (double value: self) {
             buffer.putDouble(value);

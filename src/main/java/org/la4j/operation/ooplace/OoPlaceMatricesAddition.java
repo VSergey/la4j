@@ -32,7 +32,6 @@ import org.la4j.matrix.SparseMatrix;
 
 public class OoPlaceMatricesAddition extends SymmetricMatrixMatrixOperation<Matrix> {
 
-    @Override
     public Matrix applySymmetric(DenseMatrix a, SparseMatrix b) {
         Matrix result = a.copy();
         MatrixIterator it = b.nonZeroIterator();
@@ -43,11 +42,9 @@ public class OoPlaceMatricesAddition extends SymmetricMatrixMatrixOperation<Matr
             int j = it.columnIndex();
             result.set(i, j, result.get(i, j) + x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySymmetric(RowMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         Matrix result = a.blank();
         RowMajorMatrixIterator these = a.nonZeroRowMajorIterator();
@@ -60,11 +57,9 @@ public class OoPlaceMatricesAddition extends SymmetricMatrixMatrixOperation<Matr
             int j = both.columnIndex();
             result.set(i, j, x);
         }
-
         return result;
     }
 
-    @Override
     public Matrix apply(DenseMatrix a, DenseMatrix b) {
         Matrix result = a.blank();
 
@@ -73,11 +68,9 @@ public class OoPlaceMatricesAddition extends SymmetricMatrixMatrixOperation<Matr
                 result.set(i, j, a.get(i, j) + b.get(i, j));
             }
         }
-
         return result;
     }
 
-    @Override
     public Matrix applySymmetric(SparseMatrix a, SparseMatrix b) {
         Matrix result = a.blank();
         MatrixIterator these = a.nonZeroIterator();
@@ -90,11 +83,9 @@ public class OoPlaceMatricesAddition extends SymmetricMatrixMatrixOperation<Matr
             int j = both.columnIndex();
             result.set(i, j, x);
         }
-
         return result;
     }
 
-    @Override
     public void ensureApplicableTo(Matrix a, Matrix b) {
         if (a.rows() != b.rows() || a.columns() != b.columns()) {
             throw new IllegalArgumentException(

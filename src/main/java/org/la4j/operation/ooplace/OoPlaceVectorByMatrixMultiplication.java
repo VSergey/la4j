@@ -36,9 +36,9 @@ import org.la4j.vector.SparseVector;
 import java.util.Iterator;
 
 public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<Vector> {
-    @Override
+
     public Vector apply(SparseVector a, DenseMatrix b) {
-        Vector result = DenseVector.zero(b.columns());
+        Vector result = Vectors.DENSE.zero(b.columns());
 
         for (int j = 0; j < b.columns(); j++) {
             double acc = 0.0;
@@ -51,14 +51,12 @@ public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<V
             }
             result.set(j, acc);
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(SparseVector a, RowMajorSparseMatrix b) {
         // TODO: use sequential writes
-        Vector result = a.blankOfLength(b.columns());
+        Vector result = a.blank(b.columns());
         VectorIterator these = a.nonZeroIterator();
 
         while (these.hasNext()) {
@@ -72,13 +70,11 @@ public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<V
                 result.updateAt(j, Vectors.asPlusFunction(x * y));
             }
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(SparseVector a, ColumnMajorSparseMatrix b) {
-        Vector result = a.blankOfLength(b.columns());
+        Vector result = a.blank(b.columns());
         Iterator<Integer> columns = b.iteratorOrNonZeroColumns();
 
         while (columns.hasNext()) {
@@ -87,13 +83,11 @@ public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<V
             VectorIterator those = b.nonZeroIteratorOfColumn(j);
             result.set(j, these.innerProduct(those));
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(DenseVector a, DenseMatrix b) {
-        Vector result = a.blankOfLength(b.columns());
+        Vector result = a.blank(b.columns());
 
         for (int j = 0; j < b.columns(); j++) {
             double acc = 0.0;
@@ -103,14 +97,12 @@ public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<V
             }
             result.set(j, acc);
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(DenseVector a, RowMajorSparseMatrix b) {
         // TODO: use sequential writes
-        Vector result = SparseVector.zero(b.columns());
+        Vector result = Vectors.SPARSE.zero(b.columns());
         MatrixIterator it = b.rowMajorIterator();
 
         while (it.hasNext()) {
@@ -119,13 +111,11 @@ public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<V
             int j = it.columnIndex();
             result.updateAt(j, Vectors.asPlusFunction(x * a.get(i)));
         }
-
         return result;
     }
 
-    @Override
     public Vector apply(DenseVector a, ColumnMajorSparseMatrix b) {
-        Vector result = SparseVector.zero(b.columns());
+        Vector result = Vectors.SPARSE.zero(b.columns());
         Iterator<Integer> columns = b.iteratorOrNonZeroColumns();
 
         while (columns.hasNext()) {
@@ -138,11 +128,8 @@ public class OoPlaceVectorByMatrixMultiplication extends VectorMatrixOperation<V
                 int i = it.index();
                 acc += x * a.get(i);
             }
-
             result.set(j, acc);
-
         }
-
         return result;
     }
 

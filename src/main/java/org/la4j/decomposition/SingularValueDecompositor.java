@@ -62,8 +62,8 @@ public class SingularValueDecompositor extends AbstractDecompositor implements M
         Matrix s = matrix.blankOfShape(a.columns(), a.columns());
         Matrix v = matrix.blankOfShape(a.columns(), a.columns());
 
-        Vector e = DenseVector.zero(a.columns());
-        Vector work = DenseVector.zero(a.rows());
+        Vector e = Vectors.DENSE.zero(a.columns());
+        Vector work = Vectors.DENSE.zero(a.rows());
 
         int nct = Math.min(a.rows() - 1, a.columns());
         int nrt = Math.max(0, Math.min(a.columns() - 2, a.rows()));

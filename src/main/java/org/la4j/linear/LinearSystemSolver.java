@@ -34,37 +34,26 @@ public interface LinearSystemSolver extends Serializable {
 
     /**
      * Solves the system A*x = b.
-     *
-     * @param b
-     * @return
      */
     Vector solve(Vector b);
 
     /**
      * Returns the self matrix of the solver.
-     *
-     * @return
      */
     Matrix self();
 
     /**
      * Returns the number os unknowns in this solver.
-     *
-     * @return
      */
     int unknowns();
 
     /**
      * Returns the number of equations in this solver.
-     *
-     * @return
      */
     int equations();
 
     /**
      * Checks whether this solver applicable to given {@code matrix} or not.
-     *
-     * @param matrix
      */
     boolean applicableTo(Matrix matrix);
 }

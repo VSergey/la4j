@@ -247,49 +247,41 @@ public final class LinearAlgebra {
 
     public static enum SolverFactory {
         GAUSSIAN {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new GaussianSolver(matrix);
             }
         },
         JACOBI {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new JacobiSolver(matrix);
             }
         },
         SEIDEL {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new SeidelSolver(matrix);
             }
         },
         FORWARD_BACK_SUBSTITUTION {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new ForwardBackSubstitutionSolver(matrix);
             }
         },
         LEAST_SQUARES {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new LeastSquaresSolver(matrix);
             }
         },
         SQUARE_ROOT {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new SquareRootSolver(matrix);
             }
         },
         SWEEP {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 return new SweepSolver(matrix);
             }
         },
         SMART {
-            @Override
             public LinearSystemSolver create(Matrix matrix) {
                 // TODO: We can do it smarter in future
                 if (matrix.rows() == matrix.columns()) {
@@ -307,19 +299,16 @@ public final class LinearAlgebra {
 
     public static enum InverterFactory {
         GAUSS_JORDAN {
-            @Override
             public MatrixInverter create(Matrix matrix) {
                 return new GaussJordanInverter(matrix);
             }
         },
         NO_PIVOT_GAUSS {
-            @Override
             public MatrixInverter create(Matrix matrix) {
                 return new NoPivotGaussInverter(matrix);
             }
         },
         SMART {
-            @Override
             public MatrixInverter create(Matrix matrix) {
                 return new GaussJordanInverter(matrix);
             }
@@ -330,43 +319,36 @@ public final class LinearAlgebra {
 
     public static enum DecompositorFactory {
         CHOLESKY {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new CholeskyDecompositor(matrix);
             }
         },
         EIGEN {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new EigenDecompositor(matrix);
             }
         },
         RAW_LU {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new RawLUDecompositor(matrix);
             }
         },
         LU {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new LUDecompositor(matrix);
             }
         },
         RAW_QR {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new RawQRDecompositor(matrix);
             }
         },
         QR {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new QRDecompositor(matrix);
             }
         },
         SVD {
-            @Override
             public MatrixDecompositor create(Matrix matrix) {
                 return new SingularValueDecompositor(matrix);
             }

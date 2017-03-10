@@ -51,11 +51,13 @@ public abstract class VectorTest<T extends Vector> {
     }
 
     public T v(double... values) {
-        return V.v(values).to(factory);
+        Vector vector = V.v(values);
+        return factory.convert(vector);
     }
 
     public T vz(int length) {
-        return V.vz(length).to(factory);
+        Vector vector = V.vz(length);
+        return factory.convert(vector);
     }
 
     @Test
@@ -92,10 +94,10 @@ public abstract class VectorTest<T extends Vector> {
         Vector b = v(7.0, 0.0, 1.0, 0.0, 0.0);
         Vector c = v(7.0, 0.0);
 
-        a = a.copyOfLength(5);
+        a = a.copy(5);
         Assert.assertEquals(b, a);
 
-        a = a.copyOfLength(2);
+        a = a.copy(2);
         Assert.assertEquals(c, a);
     }
 
@@ -105,10 +107,10 @@ public abstract class VectorTest<T extends Vector> {
         Vector b = v();
         Vector c = v(0.0, 0.0, 0.0, 0.0);
 
-        a = a.copyOfLength(0);
+        a = a.copy(0);
         Assert.assertEquals(b, a);
 
-        a = a.copyOfLength(4);
+        a = a.copy(4);
         Assert.assertEquals(c, a);
     }
 
@@ -456,11 +458,8 @@ public abstract class VectorTest<T extends Vector> {
      * @param vector2 Vector2
      * @return True if both vectors contain the same elements
      */
-    public boolean testWhetherVectorsContainSameElements(Vector vector1,
-                                                         Vector vector2) {
-
+    public boolean testWhetherVectorsContainSameElements(Vector vector1, Vector vector2) {
         if (vector1.length() == vector2.length()) {
-
             boolean[] checkList = new boolean[vector1.length()];
 
             for (int i = 0; i < vector1.length(); i++) {
@@ -475,8 +474,8 @@ public abstract class VectorTest<T extends Vector> {
             }
 
             boolean result = true;
-            for (int i = 0; i < checkList.length; i++) {
-                if (!checkList[i]) {
+            for (boolean b : checkList) {
+                if (!b) {
                     result = false;
                 }
             }
@@ -546,15 +545,10 @@ public abstract class VectorTest<T extends Vector> {
 
     @Test
     public void testIssue162_0() {
-        VectorPredicate pi = new VectorPredicate() {
-            @Override
-            public boolean test(int i, double value) {
-                return value == 3.14;
-            }
-        };
+        VectorPredicate pi = (i, value) -> value == 3.14;
 
         Vector a = v();
-        Vector b = a.copyOfLength(31);
+        Vector b = a.copy(31);
 
         Assert.assertEquals(0, a.length());
         Assert.assertEquals(31, b.length());
@@ -562,41 +556,36 @@ public abstract class VectorTest<T extends Vector> {
         b.setAll(3.14);
         Assert.assertTrue(b.is(pi));
 
-        Vector c = b.copyOfLength(42);
+        Vector c = b.copy(42);
         c.setAll(3.14);
         Assert.assertTrue(c.is(pi));
 
-        Vector d = c.copyOfLength(54);
+        Vector d = c.copy(54);
         d.setAll(3.14);
         Assert.assertTrue(d.is(pi));
     }
 
     @Test
     public void testResize_32_to_110_to_1076_to_31() {
-        VectorPredicate fortyTwo = new VectorPredicate() {
-            @Override
-            public boolean test(int i, double value) {
-                return value == 42.0;
-            }
-        };
+        VectorPredicate fortyTwo = (i, value) -> value == 42.0;
 
         Vector a = v();
-        Vector b = a.copyOfLength(32);
+        Vector b = a.copy(32);
 
         Assert.assertEquals(32, b.length());
 
         b.setAll(42.0);
         Assert.assertTrue(b.is(fortyTwo));
 
-        Vector c = b.copyOfLength(110);
+        Vector c = b.copy(110);
         c.setAll(42.0);
         Assert.assertTrue(c.is(fortyTwo));
 
-        Vector d = c.copyOfLength(1076);
+        Vector d = c.copy(1076);
         d.setAll(42.0);
         Assert.assertTrue(d.is(fortyTwo));
 
-        Vector e = d.copyOfLength(31);
+        Vector e = d.copy(31);
         e.setAll(42.0);
         Assert.assertTrue(e.is(fortyTwo));
     }
@@ -659,7 +648,7 @@ public abstract class VectorTest<T extends Vector> {
         Vector a = v(1000.0, 1.0);
         Assert.assertTrue(a.equals(a, Vectors.EPS));
 
-        Vector b = v().copyOfLength(1000);
+        Vector b = v().copy(1000);
         b.setAll(42.0);
         Assert.assertFalse(a.equals(b, Vectors.EPS));
         Assert.assertFalse(b.equals(a, Vectors.EPS));
@@ -681,12 +670,12 @@ public abstract class VectorTest<T extends Vector> {
 
     @Test
     public void testEquals() throws Exception {
-        Vector a = v().copyOfLength(1000);
+        Vector a = v().copy(1000);
         a.setAll(1.0);
         Assert.assertTrue(a.equals(a));
         Assert.assertTrue(a.copy().equals(a));
 
-        Vector d = v().copyOfLength(1000);
+        Vector d = v().copy(1000);
         Assert.assertFalse(d.equals(a));
         Assert.assertTrue(d.equals(d.copy()));
 
@@ -708,32 +697,32 @@ public abstract class VectorTest<T extends Vector> {
     @Test
     public void testFromCollection_empty() {
         List<Number> values = new LinkedList<>();
-        Assert.assertEquals(Vector.fromCollection(values), Vector.zero(0));
+        Assert.assertEquals(Vectors.BASIC.fromCollection(values), Vectors.BASIC.zero(0));
     }
 
     @Test
     public void testFromCollection_normal_x3() {
         List<Double> values = Arrays.asList(1.0, 2.0, 3.0);
-        Vector v = Vector.fromCollection(values);
-        Assert.assertEquals(v, Vector.fromArray(new double[]{1.0, 2.0, 3.0}));
+        Vector v = Vectors.BASIC.fromCollection(values);
+        Assert.assertEquals(v, Vectors.BASIC.fromArray(new double[]{1.0, 2.0, 3.0}));
     }
 
     @Test
     public void testFromCollection_byte() {
         List<Byte> values = Arrays.asList((byte) 1, (byte) 3, (byte) 5, (byte) 6);
-        Vector v = Vector.fromCollection(values);
-        Assert.assertEquals(v, Vector.fromArray(new double[]{1.0, 3.0, 5.0, 6.0}));
+        Vector v = Vectors.BASIC.fromCollection(values);
+        Assert.assertEquals(v, Vectors.BASIC.fromArray(new double[]{1.0, 3.0, 5.0, 6.0}));
     }
 
     @Test(expected = NullPointerException.class)
     public void testFromCollection_NPE() {
-        Vector v = Vector.fromCollection(null);
+        Vector v = Vectors.BASIC.fromCollection(null);
     }
 
     @Test
     public void testFromMap_empty() {
         Map<Integer, Double> map = new HashMap<>();
-        Assert.assertEquals(Vector.fromMap(map, 0), Vector.zero(0));
+        Assert.assertEquals(Vectors.SPARSE.fromMap(map, 0), Vectors.SPARSE.zero(0));
     }
 
     @Test
@@ -742,14 +731,14 @@ public abstract class VectorTest<T extends Vector> {
         map.put(0, 1.0);
         map.put(3, 2.0);
         map.put(5, 1.0);
-        Vector v = Vector.fromArray(new double[]{1, 0, 0, 2, 0, 1, 0});
-        Assert.assertEquals(v, Vector.fromMap(map, 7));
+        Vector v = Vectors.SPARSE.fromArray(new double[]{1, 0, 0, 2, 0, 1, 0});
+        Assert.assertEquals(v, Vectors.SPARSE.fromMap(map, 7));
     }
 
     @Test
     public void testFromMap_emptyMap() {
         Map<Integer, Double> map = new HashMap<>();
-        Assert.assertEquals(Vector.fromMap(map, 5), Vector.zero(5));
+        Assert.assertEquals(Vectors.SPARSE.fromMap(map, 5), Vectors.SPARSE.zero(5));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -758,12 +747,12 @@ public abstract class VectorTest<T extends Vector> {
         map.put(0, 1.0);
         map.put(3, 2.0);
         map.put(-2, 1.0);
-        Vector v = Vector.fromMap(map, 5);
+        Vector v = Vectors.SPARSE.fromMap(map, 5);
     }
 
     @Test(expected = NullPointerException.class)
     public void testFromMap_NPE() {
-        Vector v = Vector.fromMap(null, 4);
+        Vector v = Vectors.SPARSE.fromMap(null, 4);
     }
 
     @Test
@@ -800,8 +789,8 @@ public abstract class VectorTest<T extends Vector> {
     public void testMutation() {
         Vector a = v(900, 0.0, -200, 100.123, -100, 0, 800, -1200);
 
-        Assert.assertEquals(a, a.toSparseVector());
-        Assert.assertEquals(a, a.toDenseVector());
+        Assert.assertEquals(a, Vectors.SPARSE.convert(a));
+        Assert.assertEquals(a, Vectors.DENSE.convert(a));
 
         final double sum[] = new double[1];
         a.shuffle().each((i, d) -> sum[0]+=d);
@@ -817,7 +806,7 @@ public abstract class VectorTest<T extends Vector> {
         Vector a = v(900, 0.0, -200, 100.123, -100, 0, 800, -1200);
         byte[] bytes = a.toBinary();
 
-        Vector b = Vector.fromBinary(bytes);
+        Vector b = VectorFactory.fromBinaryArray(bytes);
         Assert.assertEquals(a, b);
     }
 }

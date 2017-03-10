@@ -31,7 +31,6 @@ import org.la4j.matrix.SparseMatrix;
 
 public class InPlaceCopyMatrixToMatrix extends SimpleMatrixMatrixOperation<Matrix> {
 
-    @Override
     public Matrix applySimple(DenseMatrix a, SparseMatrix b) {
         MatrixIterator it = b.iterator();
         while (it.hasNext()) {
@@ -43,37 +42,30 @@ public class InPlaceCopyMatrixToMatrix extends SimpleMatrixMatrixOperation<Matri
                 it.set(x);
             }
         }
-
         return b;
     }
 
-    @Override
     public Matrix applySimple(SparseMatrix a, DenseMatrix b) {
         return fromSparseToMatrix(a, b);
     }
 
-    @Override
     public Matrix applySimple(SparseMatrix a, SparseMatrix b) {
         return fromSparseToMatrix(a, b);
     }
 
-    @Override
     public Matrix apply(DenseMatrix a, DenseMatrix b) {
         for (int i = 0; i < a.rows(); i++) {
             for (int j = 0; j < a.columns(); j++) {
                 b.set(i, j, a.get(i, j));
             }
         }
-
         return b;
     }
 
-    @Override
     public Matrix apply(RowMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         return fromSparseToMatrix(a, b);
     }
 
-    @Override
     public Matrix apply(ColumnMajorSparseMatrix a, RowMajorSparseMatrix b) {
         return fromSparseToMatrix(a, b);
     }
@@ -86,7 +78,8 @@ public class InPlaceCopyMatrixToMatrix extends SimpleMatrixMatrixOperation<Matri
             int j = it.columnIndex();
             b.set(i, j, x);
         }
-
         return b;
     }
+
+    public void ensureApplicableTo(Matrix a, Matrix b) { }
 }

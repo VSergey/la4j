@@ -40,7 +40,6 @@ public class LeastNormSolver extends AbstractSolver implements LinearSystemSolve
         super(a);
     }
 
-    @Override
     public Vector solve(Vector b) {
         ensureRHSIsCorrect(b);
 
@@ -50,7 +49,6 @@ public class LeastNormSolver extends AbstractSolver implements LinearSystemSolve
         return pseudoInverse.multiply(b);
     }
 
-    @Override
     public boolean applicableTo(Matrix matrix) {
         //TODO: we need to think about how to improve the speed here.
         //Note: Matrix.rank() works for O(N^3) which is quite slow.
