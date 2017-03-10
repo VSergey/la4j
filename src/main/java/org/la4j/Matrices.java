@@ -28,8 +28,9 @@ package org.la4j;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
-import java.util.*;
 
+import gnu.trove.list.array.TDoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.la4j.matrix.MatrixFactory;
 import org.la4j.matrix.dense.Basic1DMatrix;
 import org.la4j.matrix.dense.Basic2DMatrix;
@@ -432,8 +433,8 @@ public final class Matrices {
             }
             int rows = a.rows() + c.rows();
             int columns = a.columns() + b.columns();
-            ArrayList<Double> values = new ArrayList<>();
-            ArrayList<Integer> rowIndices = new ArrayList<>();
+            TDoubleArrayList values = new TDoubleArrayList();
+            IntArrayList rowIndices = new IntArrayList();
             int[] columnPointers = new int[rows + 1];
 
             int k = 0;
@@ -461,12 +462,8 @@ public final class Matrices {
                 }
                 columnPointers[i + 1] = k;
             }
-            double[] valuesArray = new double[values.size()];
-            int[] rowIndArray = new int[rowIndices.size()];
-            for (int i = 0; i < values.size(); i++) {
-                valuesArray[i] = values.get(i);
-                rowIndArray[i] = rowIndices.get(i);
-            }
+            double[] valuesArray = values.toArray(new double[values.size()]);
+            int[] rowIndArray = rowIndices.toIntArray(new int[rowIndices.size()]);
             return new CCSMatrix(rows, columns, k, valuesArray, rowIndArray, columnPointers);
         }
         public CCSMatrix fromBinary(byte[] array) {
@@ -551,8 +548,8 @@ public final class Matrices {
             }
             int rows = a.rows() + c.rows();
             int columns = a.columns() + b.columns();
-            ArrayList<Double> values = new ArrayList<>();
-            ArrayList<Integer> columnIndices = new ArrayList<>();
+            TDoubleArrayList values = new TDoubleArrayList();
+            IntArrayList columnIndices = new IntArrayList();
             int[] rowPointers = new int[rows + 1];
             int k = 0;
             rowPointers[0] = 0;
@@ -579,12 +576,8 @@ public final class Matrices {
                 }
                 rowPointers[i + 1] = k;
             }
-            double[] valuesArray = new double[values.size()];
-            int[] colIndArray = new int[columnIndices.size()];
-            for (int i = 0; i < values.size(); i++) {
-                valuesArray[i] = values.get(i);
-                colIndArray[i] = columnIndices.get(i);
-            }
+            double[] valuesArray = values.toArray(new double[values.size()]);
+            int[] colIndArray = columnIndices.toIntArray(new int[columnIndices.size()]);
             return new CRSMatrix(rows, columns, k, valuesArray, colIndArray, rowPointers);
         }
         public CRSMatrix fromBinary(byte[] array) {

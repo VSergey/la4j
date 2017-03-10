@@ -1,5 +1,6 @@
 package org.la4j.operation.ooplace;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.la4j.Matrices;
 import org.la4j.Matrix;
 import org.la4j.matrix.DenseMatrix;
@@ -8,9 +9,7 @@ import org.la4j.matrix.RowMajorSparseMatrix;
 import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.operation.MatrixOperation;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class OoPlaceMatrixByItsTransposeMultiplication implements MatrixOperation<Matrix> {
 
@@ -31,16 +30,15 @@ public class OoPlaceMatrixByItsTransposeMultiplication implements MatrixOperatio
 
     public Matrix apply(RowMajorSparseMatrix a) {
         Matrix result = a.blankOfShape(a.rows(), a.rows());
-        List<Integer> nzRows = new ArrayList<Integer>();
+        IntArrayList nzRows = new IntArrayList();
         Iterator<Integer> it = a.iteratorOfNonZeroRows();
 
         while (it.hasNext()) {
             nzRows.add(it.next());
         }
-        for (int i: nzRows) {
-            for (int j: nzRows) {
-                result.set(i, j, a.nonZeroIteratorOfRow(i)
-                                  .innerProduct(a.nonZeroIteratorOfRow(j)));
+        for (int i: nzRows.elements()) {
+            for (int j: nzRows.elements()) {
+                result.set(i, j, a.nonZeroIteratorOfRow(i).innerProduct(a.nonZeroIteratorOfRow(j)));
             }
         }
         return result;

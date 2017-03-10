@@ -1,5 +1,6 @@
 package org.la4j.operation.ooplace;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.la4j.iterator.MatrixIterator;
 import org.la4j.iterator.VectorIterator;
 import org.la4j.Matrices;
@@ -10,9 +11,7 @@ import org.la4j.matrix.RowMajorSparseMatrix;
 import org.la4j.operation.MatrixMatrixOperation;
 import org.la4j.Vector;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class OoPlaceMatricesMultiplication implements MatrixMatrixOperation<Matrix> {
 
@@ -110,17 +109,16 @@ public class OoPlaceMatricesMultiplication implements MatrixMatrixOperation<Matr
 
     public Matrix apply(RowMajorSparseMatrix a, ColumnMajorSparseMatrix b) {
         Matrix result = a.blankOfShape(a.rows(), b.columns());
-        Iterator<Integer> nzRows = a.iteratorOfNonZeroRows();
         Iterator<Integer> nzColumnsIt = b.iteratorOrNonZeroColumns();
-        List<Integer> nzColumns = new ArrayList<>();
+        IntArrayList nzColumns = new IntArrayList();
         while(nzColumnsIt.hasNext()) {
             nzColumns.add(nzColumnsIt.next());
         }
+        Iterator<Integer> nzRows = a.iteratorOfNonZeroRows();
         while(nzRows.hasNext()) {
             int i = nzRows.next();
-            for (int j: nzColumns) {
-                result.set(i, j, a.nonZeroIteratorOfRow(i)
-                                  .innerProduct(b.nonZeroIteratorOfColumn(j)));
+            for (int j: nzColumns.elements()) {
+                result.set(i, j, a.nonZeroIteratorOfRow(i).innerProduct(b.nonZeroIteratorOfColumn(j)));
             }
         }
         return result;

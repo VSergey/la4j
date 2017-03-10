@@ -73,7 +73,7 @@ public abstract class RowMajorSparseMatrix extends SparseMatrix {
         Matrix result = Matrices.CCS.zero(columns, rows);
 
         Iterator<Integer> nzRows = iteratorOfNonZeroRows();
-        List<Integer> reversedNzRows = new LinkedList<Integer>();
+        List<Integer> reversedNzRows = new LinkedList<>();
         while (nzRows.hasNext()) {
             reversedNzRows.add(0, nzRows.next());
         }
