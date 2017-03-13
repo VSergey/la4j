@@ -111,7 +111,7 @@ public class BasicVector extends DenseVector {
         }
     }
 
-    public Vector copy(int length) {
+    public BasicVector copy(int length) {
       ensureLengthIsCorrect(length);
 
       double[] $self = new double[length];

@@ -221,7 +221,7 @@ public class CompressedVector extends SparseVector {
         }
     }
 
-    public Vector copy(int length) {
+    public CompressedVector copy(int length) {
         ensureLengthIsCorrect(length);
 
         int $cardinality = (length >= this.length) ?

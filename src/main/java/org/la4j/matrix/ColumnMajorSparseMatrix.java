@@ -24,7 +24,6 @@ package org.la4j.matrix;
 import org.la4j.*;
 import org.la4j.iterator.ColumnMajorMatrixIterator;
 import org.la4j.iterator.MatrixIterator;
-import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.operation.MatrixMatrixOperation;
 import org.la4j.operation.MatrixOperation;
 import org.la4j.operation.MatrixVectorOperation;

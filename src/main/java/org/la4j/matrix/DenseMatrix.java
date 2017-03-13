@@ -30,6 +30,13 @@ import java.text.NumberFormat;
 
 public abstract class DenseMatrix extends AbstractMatrix {
 
+    /**
+     * Converts this dense matrix to double array.
+     *
+     * @return an array representation of this matrix
+     */
+    public abstract double[][] toArray();
+
     public DenseMatrix(int rows, int columns) {
         super(rows, columns);
     }
@@ -38,12 +45,6 @@ public abstract class DenseMatrix extends AbstractMatrix {
     public MatrixFactory factory() {
         return Matrices.DENSE;
     }
-    /**
-     * Converts this dense matrix to double array.
-     * 
-     * @return an array representation of this matrix
-     */
-    public abstract double[][] toArray();
 
     public Vector getRow(int i) {
         Vector result = Vectors.DENSE.zero(columns);

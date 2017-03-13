@@ -27,7 +27,6 @@ package org.la4j;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.*;
 
 import org.la4j.iterator.VectorIterator;
 import org.la4j.operation.VectorMatrixOperation;
@@ -70,14 +69,15 @@ public interface Vector extends Iterable<Double> {
      *
      * @param value the element's new value
      */
-    default void setAll(double value) {
-        VectorIterator it = iterator();
+    void setAll(double value);
 
-        while (it.hasNext()) {
-            it.next();
-            it.set(value);
-        }
-    }
+    /**
+     * Swaps the specified elements of this vector.
+     *
+     * @param i element's index
+     * @param j element's index
+     */
+    void swapElements(int i, int j);
 
     /**
      * Pipes this vector to a given {@code operation}.
@@ -123,15 +123,7 @@ public interface Vector extends Iterable<Double> {
      *
      * @return the sub-vector of this vector
      */
-    default Vector slice(int from, int until) {
-        Vector result = blank(until - from);
-
-        for (int i = from; i < until; i++) {
-            result.set(i - from, get(i));
-        }
-
-        return result;
-    }
+    Vector slice(int from, int until);
 
     /**
      * Retrieves the specified sub-vector of this vector. The sub-vector is specified by
@@ -164,17 +156,7 @@ public interface Vector extends Iterable<Double> {
      *
      * @return the new vector with the selected elements
      */
-    default Vector select(int ... indices) {
-        int newLength = indices.length;
-
-        Vector result = blank(newLength);
-
-        for (int i = 0; i < newLength; i++) {
-            result.set(i, get(indices[i]));
-        }
-
-        return result;
-    }
+    Vector select(int ... indices);
 
     /**
      * Builds a new vector by applying given {@code function} to each element
@@ -184,33 +166,14 @@ public interface Vector extends Iterable<Double> {
      *
      * @return the transformed vector
      */
-    default Vector transform(VectorFunction function) {
-        VectorIterator it = iterator();
-        Vector result = blank();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            result.set(i, function.evaluate(i, x));
-        }
-
-        return result;
-    }
+    Vector transform(VectorFunction function);
 
     /**
      * Updates all elements of this vector by applying given {@code function}.
      *
      * @param function the the vector function
      */
-    default void update(VectorFunction function) {
-        VectorIterator it = iterator();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            it.set(function.evaluate(i, x));
-        }
-    }
+    void update(VectorFunction function);
 
     /**
      * Updates the specified element of this vector by applying given {@code function}.
@@ -241,18 +204,7 @@ public interface Vector extends Iterable<Double> {
      *
      * @return whether this vector compiles with predicate
      */
-    default boolean is(VectorPredicate predicate) {
-        boolean result = true;
-        VectorIterator it = iterator();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            result = result && predicate.test(i, x);
-        }
-
-        return result;
-    }
+    boolean is(VectorPredicate predicate);
 
     /**
      * Checks whether this vector compiles with given {@code predicate} or not.
@@ -278,15 +230,7 @@ public interface Vector extends Iterable<Double> {
      *
      * @param procedure the vector procedure
      */
-    default void each(VectorProcedure procedure) {
-        VectorIterator it = iterator();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            procedure.apply(i, x);
-        }
-    }
+    void each(VectorProcedure procedure);
 
     /**
      * Calculates an Euclidean norm of this vector.
@@ -343,38 +287,13 @@ public interface Vector extends Iterable<Double> {
     }
 
     /**
-     * Swaps the specified elements of this vector.
-     *
-     * @param i element's index
-     * @param j element's index
-     */
-    default void swapElements(int i, int j) {
-        if (i != j) {
-            double s = get(i);
-            set(i, get(j));
-            set(j, s);
-        }
-    }
-
-    /**
      * Adds given {@code value} (v) to this vector (X).
      *
      * @param value the right hand value for addition
      *
      * @return X + v
      */
-    default Vector add(double value) {
-        VectorIterator it = iterator();
-        Vector result = blank();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            result.set(i, x + value);
-        }
-
-        return result;
-    }
+    Vector add(double value);
 
     /**
      * Adds given {@code vector} (X) to this vector (Y).
@@ -394,17 +313,7 @@ public interface Vector extends Iterable<Double> {
      *
      * @return X * v
      */
-    default Vector multiply(double value) {
-        VectorIterator it = iterator();
-        Vector result = blank();
-
-        while (it.hasNext()) {
-            double x = it.next();
-            int i = it.index();
-            result.set(i, x * value);
-        }
-        return result;
-    }
+    Vector multiply(double value);
 
     /**
      * Shuffles this vector.
@@ -417,19 +326,7 @@ public interface Vector extends Iterable<Double> {
      *
      * @return the shuffled vector
      */
-    default Vector shuffle() {
-        Vector result = copy();
-
-        // Conduct Fisher-Yates shuffle
-        Random random = new Random();
-
-        for (int i = 0; i < length(); i++) {
-            int j = random.nextInt(length() - i) + i;
-            swapElements(i, j);
-        }
-
-        return result;
-    }
+    Vector shuffle();
 
     /**
      * Calculates the Hadamard (element-wise) product of this vector and given {@code that}.
@@ -537,25 +434,19 @@ public interface Vector extends Iterable<Double> {
         return fold(Vectors.asSumAccumulator(0.0));
     }
 
+    /**
+     * Returns true when vector is equal to given {@code that} vector with given
+     * {@code precision}.
+     *
+     * @param that vector
+     * @param precision given precision
+     *
+     * @return equals of this matrix to that
+     */
+    boolean equals(Vector that, double precision);
+
 
     VectorFactory factory();
-
-    /**
-     * Converts this vector into the CSV (Comma Separated Value) string.
-     *
-     * @return a CSV string representing this vector
-     */
-    default String toCSV() {
-        return toCSV(DEFAULT_FORMATTER);
-    }
-
-    /**
-     * Converts this vector into the CSV (Comma Separated Value) string
-     * using the given {@code formatter}.
-     *
-     * @return a CSV string representing this vector
-     */
-    String toCSV(NumberFormat formatter);
 
     /**
      * Encodes this vector into a byte array.
@@ -625,15 +516,21 @@ public interface Vector extends Iterable<Double> {
     Matrix toDiagonalMatrix();
 
     /**
-     * Returns true when vector is equal to given {@code that} vector with given
-     * {@code precision}.
+     * Converts this vector into the CSV (Comma Separated Value) string.
      *
-     * @param that vector
-     * @param precision given precision
-     *
-     * @return equals of this matrix to that
+     * @return a CSV string representing this vector
      */
-    boolean equals(Vector that, double precision);
+    default String toCSV() {
+        return toCSV(DEFAULT_FORMATTER);
+    }
+
+    /**
+     * Converts this vector into the CSV (Comma Separated Value) string
+     * using the given {@code formatter}.
+     *
+     * @return a CSV string representing this vector
+     */
+    String toCSV(NumberFormat formatter);
 
     /**
      * Converts this vector into the string in Matrix Market format.

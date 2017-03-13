@@ -77,8 +77,6 @@ public abstract class VectorFactory<T extends Vector> {
     public abstract T convert(Vector v);
 
 
-
-
     /**
      * Creates a zero {@link Vector} of the given {@code length}.
      */

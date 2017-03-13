@@ -169,7 +169,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         return matrix;
     }
 
-    @Override
     public double getOrElse(int i, int j, double defaultValue) {
         ensureIndexesAreInBounds(i, j);
         int k = searchForColumnIndex(j, rowPointers[i], rowPointers[i + 1]);
@@ -181,7 +180,6 @@ public class CRSMatrix extends RowMajorSparseMatrix {
         return defaultValue;
     }
 
-    @Override
     public void set(int i, int j, double value) {
         ensureIndexesAreInBounds(i, j);
         int k = searchForColumnIndex(j, rowPointers[i], rowPointers[i + 1]);

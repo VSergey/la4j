@@ -3,6 +3,7 @@ package org.la4j.vector;
 import org.la4j.*;
 import org.la4j.Vector;
 import org.la4j.iterator.VectorIterator;
+import org.la4j.vector.functor.*;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -30,7 +31,23 @@ public abstract class AbstractVector implements Vector {
         return length;
     }
 
-    @Override
+    public void setAll(double value) {
+        VectorIterator it = iterator();
+
+        while (it.hasNext()) {
+            it.next();
+            it.set(value);
+        }
+    }
+
+    public void swapElements(int i, int j) {
+        if (i != j) {
+            double s = get(i);
+            set(i, get(j));
+            set(j, s);
+        }
+    }
+
     public Vector slice(int from, int until) {
         if (until - from < 0) {
             fail("Wrong slice range: [" + from + ".." + until + "].");
@@ -45,7 +62,6 @@ public abstract class AbstractVector implements Vector {
         return result;
     }
 
-    @Override
     public Vector select(int ... indices) {
         int newLength = indices.length;
 
@@ -57,6 +73,91 @@ public abstract class AbstractVector implements Vector {
 
         for (int i = 0; i < newLength; i++) {
             result.set(i, get(indices[i]));
+        }
+
+        return result;
+    }
+
+    public Vector transform(VectorFunction function) {
+        VectorIterator it = iterator();
+        Vector result = blank();
+
+        while (it.hasNext()) {
+            double x = it.next();
+            int i = it.index();
+            result.set(i, function.evaluate(i, x));
+        }
+
+        return result;
+    }
+
+    public void update(VectorFunction function) {
+        VectorIterator it = iterator();
+
+        while (it.hasNext()) {
+            double x = it.next();
+            int i = it.index();
+            it.set(function.evaluate(i, x));
+        }
+    }
+
+    public boolean is(VectorPredicate predicate) {
+        boolean result = true;
+        VectorIterator it = iterator();
+
+        while (it.hasNext()) {
+            double x = it.next();
+            int i = it.index();
+            result = result && predicate.test(i, x);
+        }
+
+        return result;
+    }
+
+    public void each(VectorProcedure procedure) {
+        VectorIterator it = iterator();
+
+        while (it.hasNext()) {
+            double x = it.next();
+            int i = it.index();
+            procedure.apply(i, x);
+        }
+    }
+
+    public Vector add(double value) {
+        VectorIterator it = iterator();
+        Vector result = blank();
+
+        while (it.hasNext()) {
+            double x = it.next();
+            int i = it.index();
+            result.set(i, x + value);
+        }
+
+        return result;
+    }
+
+    public Vector multiply(double value) {
+        VectorIterator it = iterator();
+        Vector result = blank();
+
+        while (it.hasNext()) {
+            double x = it.next();
+            int i = it.index();
+            result.set(i, x * value);
+        }
+        return result;
+    }
+
+    public Vector shuffle() {
+        Vector result = copy();
+
+        // Conduct Fisher-Yates shuffle
+        Random random = new Random();
+
+        for (int i = 0; i < length(); i++) {
+            int j = random.nextInt(length() - i) + i;
+            swapElements(i, j);
         }
 
         return result;
@@ -125,6 +226,24 @@ public abstract class AbstractVector implements Vector {
 
         return sb.toString();
     }
+
+    public String toCSV(NumberFormat formatter) {
+        return mkString(formatter, ", ");
+    }
+
+    protected void ensureLengthIsCorrect(int length) {
+        if (length < 0) {
+            fail("Wrong vector length: " + length);
+        }
+        if (length == Integer.MAX_VALUE) {
+            fail("Wrong vector length: use 'Integer.MAX_VALUE - 1' instead.");
+        }
+    }
+
+    protected void fail(String message) {
+        throw new IllegalArgumentException(message);
+    }
+
 
     /**
      * Converts this vector into a string representation.
@@ -199,24 +318,6 @@ public abstract class AbstractVector implements Vector {
                 return get();
             }
         };
-    }
-
-
-    public String toCSV(NumberFormat formatter) {
-        return mkString(formatter, ", ");
-    }
-
-    protected void ensureLengthIsCorrect(int length) {
-        if (length < 0) {
-            fail("Wrong vector length: " + length);
-        }
-        if (length == Integer.MAX_VALUE) {
-            fail("Wrong vector length: use 'Integer.MAX_VALUE - 1' instead.");
-        }
-    }
-
-    protected void fail(String message) {
-        throw new IllegalArgumentException(message);
     }
 
 }

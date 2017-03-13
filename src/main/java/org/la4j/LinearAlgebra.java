@@ -245,7 +245,7 @@ public final class LinearAlgebra {
         ROUND_FACTOR = roundFactor - 1;
     }
 
-    public static enum SolverFactory {
+    public enum SolverFactory {
         GAUSSIAN {
             public LinearSystemSolver create(Matrix matrix) {
                 return new GaussianSolver(matrix);
@@ -297,7 +297,7 @@ public final class LinearAlgebra {
         public abstract LinearSystemSolver create(Matrix matrix);
     }
 
-    public static enum InverterFactory {
+    public enum InverterFactory {
         GAUSS_JORDAN {
             public MatrixInverter create(Matrix matrix) {
                 return new GaussJordanInverter(matrix);
@@ -317,7 +317,7 @@ public final class LinearAlgebra {
         public abstract MatrixInverter create(Matrix matrix);
     }
 
-    public static enum DecompositorFactory {
+    public enum DecompositorFactory {
         CHOLESKY {
             public MatrixDecompositor create(Matrix matrix) {
                 return new CholeskyDecompositor(matrix);

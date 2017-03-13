@@ -25,7 +25,9 @@ import java.text.NumberFormat;
 
 import org.la4j.*;
 import org.la4j.iterator.VectorIterator;
+import org.la4j.matrix.sparse.CCSMatrix;
 import org.la4j.matrix.sparse.CRSMatrix;
+import org.la4j.vector.dense.BasicVector;
 import org.la4j.vector.functor.VectorAccumulator;
 import org.la4j.vector.functor.VectorProcedure;
 import org.la4j.operation.VectorMatrixOperation;
@@ -142,8 +144,8 @@ public abstract class SparseVector extends AbstractVector {
     }
 
     @Override
-    public Vector add(double value) {
-        Vector result = VectorFactory.constant(length, value);
+    public BasicVector add(double value) {
+        BasicVector result = VectorFactory.constant(length, value);
         VectorIterator it = nonZeroIterator();
 
         while (it.hasNext()) {
@@ -219,26 +221,22 @@ public abstract class SparseVector extends AbstractVector {
         return result;
     }
 
-    @Override
     public <T> T apply(VectorOperation<T> operation) {
         operation.ensureApplicableTo(this);
         return operation.apply(this);
     }
 
-    @Override
     public <T> T apply(VectorVectorOperation<T> operation, Vector that) {
         return that.apply(operation.partiallyApply(this));
     }
 
-    @Override
     public <T> T apply(VectorMatrixOperation<T> operation, Matrix that) {
         return that.apply(operation.partiallyApply(this));
     }
 
-    @Override
-    public Matrix toRowMatrix() {
+    public CRSMatrix toRowMatrix() {
         VectorIterator it = nonZeroIterator();
-        Matrix result = Matrices.CRS.zero(1, length);
+        CRSMatrix result = Matrices.CRS.zero(1, length);
 
         while (it.hasNext()) {
             double x = it.next();
@@ -249,10 +247,9 @@ public abstract class SparseVector extends AbstractVector {
         return result;
     }
 
-    @Override
-    public Matrix toColumnMatrix() {
+    public CCSMatrix toColumnMatrix() {
         VectorIterator it = nonZeroIterator();
-        Matrix result = Matrices.CCS.zero(length, 1);
+        CCSMatrix result = Matrices.CCS.zero(length, 1);
 
         while (it.hasNext()) {
             double x = it.next();
@@ -263,10 +260,9 @@ public abstract class SparseVector extends AbstractVector {
         return result;
     }
 
-    @Override
-    public Matrix toDiagonalMatrix() {
+    public CRSMatrix toDiagonalMatrix() {
         VectorIterator it = nonZeroIterator();
-        Matrix result = Matrices.CRS.zero(length, length);
+        CRSMatrix result = Matrices.CRS.zero(length, length);
 
         while (it.hasNext()) {
             double x = it.next();
@@ -277,7 +273,6 @@ public abstract class SparseVector extends AbstractVector {
         return result;
     }
 
-    @Override
     public String toMatrixMarket(NumberFormat formatter) {
         StringBuilder out = new StringBuilder();
         VectorIterator it = nonZeroIterator();

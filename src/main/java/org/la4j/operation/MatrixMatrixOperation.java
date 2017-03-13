@@ -56,6 +56,7 @@ public interface MatrixMatrixOperation<R> {
                 return MatrixMatrixOperation.this.apply(a, b);
             }
 
+            @Override
             public void ensureApplicableTo(final Matrix b) {
                 MatrixMatrixOperation.this.ensureApplicableTo(a, b);
             }
@@ -76,6 +77,7 @@ public interface MatrixMatrixOperation<R> {
                 return MatrixMatrixOperation.this.apply(a, b);
             }
 
+            @Override
             public void ensureApplicableTo(final Matrix b) {
                 MatrixMatrixOperation.this.ensureApplicableTo(a, b);
             }
@@ -96,6 +98,7 @@ public interface MatrixMatrixOperation<R> {
                 return MatrixMatrixOperation.this.apply(a, b);
             }
 
+            @Override
             public void ensureApplicableTo(final Matrix b) {
                 MatrixMatrixOperation.this.ensureApplicableTo(a, b);
             }

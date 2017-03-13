@@ -758,7 +758,6 @@ public class CCSMatrix extends ColumnMajorSparseMatrix {
         };
     }
 
-    @Override
     public byte[] toBinary() {
         int size = 1 +                 // 1 byte: class tag
                    4 +                 // 4 bytes: rows

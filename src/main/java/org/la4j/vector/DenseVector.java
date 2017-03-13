@@ -68,8 +68,8 @@ public abstract class DenseVector extends AbstractVector {
      */
     public abstract double[] toArray();
 
-    public Matrix toRowMatrix() {
-        Matrix result = Matrices.BASIC_2D.zero(1, length);
+    public Basic2DMatrix toRowMatrix() {
+        Basic2DMatrix result = Matrices.BASIC_2D.zero(1, length);
 
         for (int j = 0; j < length; j++) {
             result.set(0, j, get(j));
@@ -78,8 +78,8 @@ public abstract class DenseVector extends AbstractVector {
         return result;
     }
 
-    public Matrix toColumnMatrix() {
-        Matrix result = Matrices.BASIC_2D.zero(length, 1);
+    public Basic2DMatrix toColumnMatrix() {
+        Basic2DMatrix result = Matrices.BASIC_2D.zero(length, 1);
 
         for (int i = 0; i < length; i++) {
             result.set(i, 0, get(i));
@@ -88,8 +88,8 @@ public abstract class DenseVector extends AbstractVector {
         return result;
     }
 
-    public Matrix toDiagonalMatrix() {
-        Matrix result = Matrices.BASIC_2D.zero(length, length);
+    public Basic2DMatrix toDiagonalMatrix() {
+        Basic2DMatrix result = Matrices.BASIC_2D.zero(length, length);
 
         for (int i = 0; i < length; i++) {
             result.set(i, i, get(i));
